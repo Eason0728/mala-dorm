@@ -23,6 +23,12 @@ function submitSign(p, e) {
     }
     if (!p.sign_png) throw new Error('缺少簽名');
 
+    // 身分資料由同仁自填（後端也驗一次，不信前端）
+    const idNo = String(p.id_no || '').trim().toUpperCase();
+    const phone = String(p.phone || '').trim();
+    if (!/^[A-Z]{1,2}[0-9]{8,9}$/.test(idNo)) throw new Error('身分證字號（或居留證號）格式不正確');
+    if (!/^[0-9+\-() ]{8,15}$/.test(phone)) throw new Error('聯絡電話格式不正確');
+
     const equip = p.equip || [];
     if (!equip.length) throw new Error('缺少設備點收結果');
 
@@ -36,6 +42,7 @@ function submitSign(p, e) {
     const ts = nowStr();
     const useIp = String(getSettings()['collect.ip']).toUpperCase() === 'TRUE';
     updateRow('contracts', hit._row, {
+      id_no: idNo, phone: phone, mail_addr: String(p.mail_addr || hit.mail_addr || '').trim(),
       equip_json: JSON.stringify(equip),
       signed_at: ts,
       signed_ip: useIp ? String(p.ip || '') : '（平台不提供）',

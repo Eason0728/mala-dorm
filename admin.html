@@ -78,9 +78,7 @@
       <h2>建立合約單</h2>
       <div class="grid">
         <div><label>承租人姓名 *</label><input id="f_name"></div>
-        <div><label>身分證字號 *</label><input id="f_id_no" autocapitalize="characters"></div>
-        <div><label>聯絡電話 *</label><input id="f_phone" inputmode="tel"></div>
-        <div><label>通訊地址</label><input id="f_mail_addr"></div>
+        <div><label>通訊地址（選填，同仁簽署時可自填）</label><input id="f_mail_addr"></div>
         <div><label>房間 *</label><select id="f_room"></select></div>
         <div id="bedWrap" style="display:none"><label>床位 *</label><select id="f_bed"></select></div>
         <div><label>月租金（自動）</label><input id="f_rent" readonly></div>
@@ -167,13 +165,12 @@ $('createBtn').onclick = () => createContract(false);
 async function createContract(force) {
   const p = {
     action:'create', pass:PASS, force: force?1:'',
-    name:$('f_name').value.trim(), id_no:$('f_id_no').value.trim().toUpperCase(),
-    phone:$('f_phone').value.trim(), mail_addr:$('f_mail_addr').value.trim(),
+    name:$('f_name').value.trim(), mail_addr:$('f_mail_addr').value.trim(),
     room:$('f_room').value, bed: $('bedWrap').style.display==='none' ? '' : $('f_bed').value,
     term_start:$('f_start').value,
     fee_mgmt:$('f_mgmt').value, fee_water:$('f_water').value, fee_power:$('f_power').value,
   };
-  for (const [k,lab] of [['name','姓名'],['id_no','身分證字號'],['phone','電話'],['room','房間'],['term_start','租期起日']])
+  for (const [k,lab] of [['name','姓名'],['room','房間'],['term_start','租期起日']])
     if (!p[k]) { $('createMsg').className='msg err'; $('createMsg').textContent='請填'+lab; return; }
 
   $('createBtn').disabled = true;

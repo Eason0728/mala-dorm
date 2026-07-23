@@ -75,7 +75,7 @@ function doPost(e) {
  * 選填：bed, deposit_amt, fee_mgmt, fee_water, fee_power, force
  */
 function createContract(p, e) {
-  ['name', 'id_no', 'phone', 'room', 'term_start'].forEach(function (k) {
+  ['name', 'room', 'term_start'].forEach(function (k) {
     if (!p[k]) throw new Error('缺少必填欄位：' + k);
   });
 
@@ -104,7 +104,7 @@ function createContract(p, e) {
 
   appendRow('contracts', {
     contract_id: id, token: token,
-    name: p.name, id_no: p.id_no, phone: p.phone, mail_addr: p.mail_addr || '',
+    name: p.name, id_no: '', phone: '', mail_addr: p.mail_addr || '',  // 身分資料由同仁簽署時自填（Eason 2026-07-23）
     room: p.room, bed: bed, room_type: roomDef.type, rent: rentOf(p.room),
     deposit_type: '免押金', deposit_amt: 0,  // 2026-07-23 Eason：實際未收押金，條文已刪押金敘述
     fee_mgmt: p.fee_mgmt || '由出租人負擔',
@@ -189,8 +189,7 @@ function testPhase1() {
 /** 建三筆測試合約，驗編號流水與床位重複警告 */
 function testCreateThree() {
   const pass = getSettings()['admin.pass'];
-  const base = { pass: pass, id_no: 'A123456789', phone: '0900000000',
-                 mail_addr: '新竹市測試路1號', term_start: '2026-08-01' };
+  const base = { pass: pass, mail_addr: '新竹市測試路1號', term_start: '2026-08-01' };
   const r1 = createContract(Object.assign({}, base, { name: '測試一', room: '二樓單人房' }));
   const r2 = createContract(Object.assign({}, base, { name: '測試二', room: '三樓1號房', bed: '雙人床位A' }));
   const r3 = createContract(Object.assign({}, base, { name: '測試三', room: '三樓1號房', bed: '雙人床位A' }));

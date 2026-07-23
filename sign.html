@@ -146,6 +146,18 @@ function renderActions(equip) {
   return `
   <div class="sect-label">請你確認</div>
   <section class="action">
+    <h2>身分資料</h2>
+    <p class="hint">請填寫你本人的資料，將載入合約承租人欄。</p>
+    <div style="display:grid;gap:10px">
+      <div><label style="font-size:12px;color:var(--muted)">身分證字號（或居留證號）*</label>
+        <input id="f_id_no" autocapitalize="characters" autocomplete="off" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:7px;font-size:16px;font-family:inherit;background:var(--bg)"></div>
+      <div><label style="font-size:12px;color:var(--muted)">聯絡電話（手機）*</label>
+        <input id="f_phone" inputmode="tel" autocomplete="tel" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:7px;font-size:16px;font-family:inherit;background:var(--bg)"></div>
+      <div><label style="font-size:12px;color:var(--muted)">通訊地址</label>
+        <input id="f_mail_addr" autocomplete="street-address" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:7px;font-size:16px;font-family:inherit;background:var(--bg)"></div>
+    </div>
+  </section>
+  <section class="action">
     <h2>附屬設備點收</h2>
     <p class="hint">請實際看過房間，確認以下設備都在且可用，再勾選。</p>
     <div class="equip">
@@ -209,13 +221,25 @@ function initPad() {
 }
 
 let pad, equipBoxes;
+function idFilled() {
+  const id = document.getElementById('f_id_no').value.trim().toUpperCase();
+  const ph = document.getElementById('f_phone').value.trim();
+  return { id, ph,
+    idOk: /^[A-Z]{1,2}[0-9]{8,9}$/.test(id),
+    phOk: /^[0-9+\-() ]{8,15}$/.test(ph) };
+}
 function onChange() {
   const allEquip = equipBoxes.every(b => b.checked);
   const signed = pad.isSigned();
+  const f = idFilled();
   const btn = document.getElementById('submit');
   const st = document.getElementById('status');
-  btn.disabled = !(signed && allEquip);
-  if (!allEquip) st.textContent = '設備有未勾選的項目——若確實短缺，請先聯繫宿舍長';
+  btn.disabled = !(signed && allEquip && f.idOk && f.phOk);
+  if (!f.id) st.textContent = '請填身分證字號';
+  else if (!f.idOk) st.textContent = '身分證字號格式不正確';
+  else if (!f.ph) st.textContent = '請填聯絡電話';
+  else if (!f.phOk) st.textContent = '聯絡電話格式不正確';
+  else if (!allEquip) st.textContent = '設備有未勾選的項目——若確實短缺，請先聯繫宿舍長';
   else if (!signed) st.textContent = '請先簽名';
   else st.textContent = '確認無誤即可送出';
 }
@@ -229,6 +253,9 @@ async function submit(data) {
     equip: equipBoxes.map(b => ({ item: b.dataset.k, ok: b.checked })),
     sign_png: pad.dataUrl(),
     ua: navigator.userAgent,
+    id_no: document.getElementById('f_id_no').value.trim().toUpperCase(),
+    phone: document.getElementById('f_phone').value.trim(),
+    mail_addr: document.getElementById('f_mail_addr').value.trim(),
   };
   if (MOCK) {
     await new Promise(r => setTimeout(r, 600));
@@ -273,6 +300,9 @@ function showDone(msg, pdfUrl) {
       const sync = () => lab.classList.toggle('on', b.checked);
       b.addEventListener('change', () => { sync(); onChange(); }); sync();
     });
+    ['f_id_no','f_phone','f_mail_addr'].forEach(id =>
+      document.getElementById(id).addEventListener('input', onChange));
+    if (d.contract.mail_addr) document.getElementById('f_mail_addr').value = d.contract.mail_addr;
     document.getElementById('submit').onclick = () => submit(d);
     onChange();
   } catch (e) {
