@@ -222,9 +222,20 @@ function renderList(list) {
       <td>${esc((c.signed_at||'').slice(0,10))}</td>
       <td>
         ${c.status==='待簽' ? `<button class="ghost mini" onclick="navigator.clipboard.writeText('${url}').then(()=>event.target.textContent='已複製')">複製連結</button>` : ''}
+        ${c.status==='在住' ? `<button class="ghost mini" onclick="openHandover('${esc(c.contract_id)}',this)">開點交單</button>` : ''}
         ${c.pdf_id ? `<a class="ghost mini" style="text-decoration:none;padding:5px 10px;border:1px solid var(--line);border-radius:8px" target="_blank" href="https://drive.google.com/file/d/${esc(c.pdf_id)}/view">PDF</a>` : ''}
       </td></tr>`;
   }).join('');
+}
+
+async function openHandover(cid, btn) {
+  btn.disabled = true; btn.textContent = '建立中…';
+  const j = await api({action:'handoverCreate', pass:PASS, contract_id:cid}, true);
+  btn.disabled = false;
+  if (!j.ok) { alert(j.error); btn.textContent='開點交單'; return; }
+  await navigator.clipboard.writeText(j.url);
+  btn.textContent = '已複製點交連結';
+  alert((j.reused?'這筆已有未完成的點交單，':'點交單已建立，')+'連結已複製：\n'+j.url);
 }
 
 // 已登入過就直接進

@@ -30,6 +30,8 @@ function doGet(e) {
         return jsonOut({ ok: true, contracts: listContracts() });
       case 'contract':
         return jsonOut(getContractByToken(p.token, e));
+      case 'handover':
+        return jsonOut(getHandoverByToken(p.token, e));
       default:
         return jsonOut({ ok: false, error: '未知的 action：' + p.action });
     }
@@ -53,6 +55,10 @@ function doPost(e) {
         return jsonOut(createContract(p, e));
       case 'sign':
         return jsonOut(submitSign(p, e));
+      case 'handoverCreate':
+        return jsonOut(createHandover(p, e));
+      case 'handoverSign':
+        return jsonOut(submitHandover(p, e));
       default:
         return jsonOut({ ok: false, error: '未知的 action：' + p.action });
     }
@@ -111,11 +117,10 @@ function createContract(p, e) {
 
   logAudit('create', id, e, (p.room + ' ' + bed).trim() + '／' + p.name);
 
-  const base = String(s['site.base_url'] || '');
   return {
     ok: true, contract_id: id, token: token,
     rent: rentOf(p.room), term_start: fmtDate(start), term_end: fmtDate(end),
-    sign_url: base ? base + 'sign.html?t=' + token : '（site.base_url 未設定，Phase 2 完成後才有網址）',
+    sign_url: SITE_BASE + 'sign.html?t=' + token,
   };
 }
 

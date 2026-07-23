@@ -1,3 +1,248 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><title>退宿點交</title></head>
-<body style="font-family:sans-serif;text-align:center;padding:60px 20px">退宿點交功能建置中</body></html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>退宿點交　承租人歸還設備範圍明細表</title>
+<style>
+  :root{
+    --ink:#1c1a19; --muted:#6f665f; --line:#e2dbd4; --bg:#f7f4f1; --card:#fff;
+    --brand:#c8402c; --ok:#2f6b3a; --shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang TC","Noto Sans TC","Helvetica Neue",sans-serif;
+    line-height:1.7;font-size:15px}
+  .wrap{max-width:640px;margin:0 auto;padding:0 0 130px}
+  .cover{background:var(--card);padding:30px 24px 26px;text-align:center;border-bottom:1px solid var(--line)}
+  .logos{display:flex;justify-content:center;gap:14px;margin-bottom:12px}
+  .logos img{height:44px;border-radius:5px}
+  .cover h1{font-size:21px;margin:4px 0 14px}
+  .cover .meta{font-size:13.5px;color:var(--muted)}
+  .cover .meta strong{color:var(--ink)}
+
+  section{background:var(--card);margin:12px 0;padding:18px 20px;box-shadow:var(--shadow)}
+  .hint{font-size:13px;color:var(--muted);margin:2px 0 10px}
+
+  .item{border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px}
+  .item .head{display:flex;justify-content:space-between;align-items:baseline}
+  .item .name{font-weight:600;font-size:15.5px}
+  .item .price{font-size:12.5px;color:var(--muted)}
+  .seg{display:flex;gap:8px;margin-top:9px}
+  .seg button{flex:1;padding:9px 4px;border:1px solid var(--line);border-radius:7px;
+    background:var(--bg);font-size:14px;font-family:inherit;cursor:pointer;color:var(--muted)}
+  .seg button.on-ok{background:#f2f7f2;border-color:var(--ok);color:var(--ok);font-weight:600}
+  .seg button.on-bad{background:#fdf3f2;border-color:var(--brand);color:var(--brand);font-weight:600}
+  .note{margin-top:8px;display:none}
+  .note input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+    font-size:14px;font-family:inherit;background:var(--bg)}
+
+  .clean{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;
+    border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+  .clean input{width:20px;height:20px;margin-top:2px;accent-color:var(--brand)}
+  .clean .t{font-size:14.5px}
+  .clean .s{font-size:12.5px;color:var(--muted)}
+
+  .totalbox{display:flex;justify-content:space-between;align-items:center;
+    border-top:2px solid var(--ink);margin-top:14px;padding-top:12px}
+  .totalbox .lab{font-size:14px}
+  .totalbox .amt{font-size:22px;font-weight:700}
+  .totalbox .amt.zero{color:var(--ok)}
+  .totalbox .amt.pos{color:var(--brand)}
+  .paynote{font-size:12px;color:var(--muted);margin-top:6px}
+
+  #pad{width:100%;height:180px;border:1px dashed var(--line);border-radius:8px;
+    background:var(--bg);touch-action:none;display:block}
+  .padrow{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+  .clear{background:none;border:none;color:var(--muted);font-size:13.5px;
+    text-decoration:underline;padding:6px 0;cursor:pointer}
+
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);
+    border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    box-shadow:0 -2px 12px rgba(0,0,0,.06)}
+  .bar .inner{max-width:640px;margin:0 auto;display:flex;gap:12px;align-items:center}
+  .status{flex:1;font-size:12.5px;color:var(--muted)}
+  button.submit{background:var(--brand);color:#fff;border:none;border-radius:9px;
+    padding:14px 24px;font-size:16px;font-weight:600;cursor:pointer;white-space:nowrap}
+  button.submit:disabled{background:#cfc8c2;cursor:not-allowed}
+
+  .done{background:var(--card);margin:12px 0;padding:36px 24px;text-align:center}
+  .done .tick{font-size:40px;color:var(--ok)}
+  .done a{display:inline-block;margin-top:16px;background:var(--ink);color:#fff;
+    text-decoration:none;padding:12px 22px;border-radius:8px;font-size:15px}
+  .err{background:#fdf3f2;border-left:3px solid var(--brand);padding:16px 20px;margin:16px}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbyxyhJ35MWTjtvzKr54_9JzGfLZlclyqn2fYLWXgz0muTFzL_tu81nR1r3W332J1igm/exec';
+const qs = new URLSearchParams(location.search);
+const esc = s => String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let D, state = {}, cleanOn = false, padCtl;
+
+async function load() {
+  const t = qs.get('t');
+  if (!t) throw new Error('連結不完整，請向宿舍長索取正確的點交連結。');
+  const r = await fetch(API_URL + '?action=handover&token=' + encodeURIComponent(t));
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || '連結無效');
+  return j;
+}
+
+function render() {
+  const h = D.handover;
+  const app = document.getElementById('app');
+  app.innerHTML = `
+  <div class="cover">
+    <div class="logos">
+      <img src="assets/logo-mala.jpg" alt=""><img src="assets/logo-mozhu.jpg" alt="">
+    </div>
+    <h1>承租人歸還設備範圍明細表</h1>
+    <div class="meta"><strong>${esc(h.name)}</strong>　${esc(h.room_bed)}<br>
+    原租期 ${esc(h.term_start)} ～ ${esc(h.term_end)}</div>
+  </div>
+  <section>
+    <p class="hint">請與宿舍長一起逐項確認設備狀態。異常或未歸還的項目，依簽約時的賠償單價計算。</p>
+    ${D.equip.map((x,i)=>`
+    <div class="item" id="it${i}">
+      <div class="head"><span class="name">${esc(x.item)}</span>
+      <span class="price">賠償單價 ${x.price.toLocaleString()} 元</span></div>
+      <div class="seg" data-k="normal" data-i="${i}">
+        <button data-v="1">正常</button><button data-v="0">異常</button>
+      </div>
+      <div class="note" id="note${i}"><input placeholder="異常說明（例如:床墊污損）" maxlength="60"></div>
+      <div class="seg" data-k="returned" data-i="${i}">
+        <button data-v="1">已歸還</button><button data-v="0">未歸還</button>
+      </div>
+    </div>`).join('')}
+    <div class="clean">
+      <input type="checkbox" id="cleanBox">
+      <div><div class="t">房間未回復原狀，或留有私人物品（清潔費 ${D.cleaning_fee.toLocaleString()} 元）</div>
+      <div class="s">房間已清空且復原者不必勾選</div></div>
+    </div>
+    <div class="totalbox">
+      <span class="lab">應賠償金額合計</span>
+      <span class="amt zero" id="total">0 元</span>
+    </div>
+    <div class="paynote">金額經承租人書面確認無誤後，得自當期薪資代扣，或另行以現金、轉帳支付（契約第三條第二項）。</div>
+  </section>
+  <section>
+    <h2 style="font-size:15.5px;margin:0 0 4px">承租人簽名</h2>
+    <p class="hint">簽名代表你確認上列點交結果與金額。</p>
+    <canvas id="pad"></canvas>
+    <div class="padrow"><span></span><button class="clear" id="clear">清除重簽</button></div>
+  </section>
+  <div class="bar"><div class="inner">
+    <div class="status" id="status">請逐項點選設備狀態</div>
+    <button class="submit" id="submit" disabled>確認送出</button>
+  </div></div>`;
+
+  document.querySelectorAll('.seg').forEach(seg => {
+    seg.querySelectorAll('button').forEach(btn => {
+      btn.onclick = () => {
+        const i = +seg.dataset.i, k = seg.dataset.k, v = btn.dataset.v === '1';
+        state[i] = state[i] || {};
+        state[i][k] = v;
+        seg.querySelectorAll('button').forEach(b => b.className='');
+        btn.className = v ? 'on-ok' : 'on-bad';
+        if (k==='normal') document.getElementById('note'+i).style.display = v ? 'none' : 'block';
+        update();
+      };
+    });
+  });
+  document.getElementById('cleanBox').onchange = e => { cleanOn = e.target.checked; update(); };
+  document.getElementById('clear').onclick = () => { padCtl.clear(); update(); };
+  document.getElementById('submit').onclick = submit;
+  padCtl = initPad(update);
+  update();
+}
+
+function initPad(onDirty) {
+  const cv = document.getElementById('pad');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = cv.getBoundingClientRect();
+  cv.width = rect.width*dpr; cv.height = rect.height*dpr;
+  const ctx = cv.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.lineWidth = 2.6; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#14142a';
+  let drawing=false, dirty=false, last=null;
+  const pos = e => { const r=cv.getBoundingClientRect(); const p=e.touches?e.touches[0]:e;
+    return {x:p.clientX-r.left, y:p.clientY-r.top}; };
+  const start=e=>{e.preventDefault();drawing=true;last=pos(e);};
+  const move=e=>{if(!drawing)return;e.preventDefault();const p=pos(e);
+    ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;
+    if(!dirty){dirty=true;onDirty();}};
+  cv.addEventListener('mousedown',start);cv.addEventListener('mousemove',move);
+  window.addEventListener('mouseup',()=>drawing=false);
+  cv.addEventListener('touchstart',start,{passive:false});
+  cv.addEventListener('touchmove',move,{passive:false});
+  cv.addEventListener('touchend',()=>drawing=false);
+  return { isSigned:()=>dirty,
+    clear(){ctx.clearRect(0,0,cv.width,cv.height);dirty=false;},
+    dataUrl:()=>cv.toDataURL('image/png') };
+}
+
+function update() {
+  let total = 0, doneCount = 0;
+  D.equip.forEach((x,i)=>{
+    const st = state[i]||{};
+    if (st.normal!==undefined && st.returned!==undefined) doneCount++;
+    if (st.normal===false || st.returned===false) total += x.price;
+  });
+  if (cleanOn) total += D.cleaning_fee;
+  const t = document.getElementById('total');
+  t.textContent = total.toLocaleString() + ' 元';
+  t.className = 'amt ' + (total>0?'pos':'zero');
+  const all = doneCount === D.equip.length;
+  const signed = padCtl && padCtl.isSigned();
+  const btn = document.getElementById('submit');
+  const stEl = document.getElementById('status');
+  btn.disabled = !(all && signed);
+  stEl.textContent = !all ? `還有 ${D.equip.length-doneCount} 項設備未點選`
+                   : !signed ? '請簽名' : '確認無誤即可送出';
+}
+
+async function submit() {
+  const btn = document.getElementById('submit');
+  btn.disabled = true; btn.textContent = '送出中…';
+  const items = D.equip.map((x,i)=>({ item:x.item,
+    normal: state[i].normal, returned: state[i].returned,
+    note: document.querySelector('#note'+i+' input')?.value.trim() || '' }));
+  const r = await fetch(API_URL, { method:'POST', body: JSON.stringify({
+    action:'handoverSign', token: qs.get('t'), items,
+    need_cleaning: cleanOn, sign_png: padCtl.dataUrl(), ua: navigator.userAgent }) });
+  const j = await r.json();
+  if (!j.ok) { alert('送出失敗：'+j.error); btn.disabled=false; btn.textContent='確認送出'; return; }
+  showDone(j);
+}
+
+function showDone(j) {
+  document.getElementById('app').innerHTML = `
+  <div class="done"><div class="tick">✓</div>
+    <h1 style="font-size:20px;margin:10px 0 6px">點交完成</h1>
+    <p style="color:#6f665f;font-size:14px">應賠償金額合計 <strong>${Number(j.compensation_total||0).toLocaleString()} 元</strong></p>
+    ${j.pdf_url?`<a href="${j.pdf_url}" target="_blank">下載點交單 PDF</a>`:''}
+  </div>`;
+}
+
+(async function(){
+  const app = document.getElementById('app');
+  try {
+    D = await load();
+    if (D.state === 'signed') {
+      const h = D.handover;
+      app.innerHTML = `<div class="done"><div class="tick">✓</div>
+        <h1 style="font-size:19px;margin:10px 0 6px">這張點交單已完成</h1>
+        <p style="color:#6f665f;font-size:14px">點交時間 ${esc(h.signed_at)}　賠償合計 ${Number(h.compensation_total||0).toLocaleString()} 元</p>
+        ${h.pdf_url?`<a href="${h.pdf_url}" target="_blank">下載點交單 PDF</a>`:''}</div>`;
+      return;
+    }
+    render();
+  } catch(e) {
+    app.innerHTML = `<div class="err"><strong>無法開啟點交單</strong><br>${esc(e.message)}</div>`;
+  }
+})();
+</script>
+</body>
+</html>
