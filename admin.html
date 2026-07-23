@@ -217,12 +217,12 @@ function renderList(list) {
       <td>${esc(c.room)} ${esc(c.bed||'')}</td>
       <td>${Number(c.rent).toLocaleString()}</td>
       <td class="${dueSoon?'due':''}">${esc(c.term_start)}<br>～${esc(c.term_end)}${dueSoon?'（30日內到期）':''}</td>
-      <td>第 ${esc(c.term_no)} 期</td>
-      <td><span class="st ${esc(c.status)}">${esc(c.status)}</span></td>
+      <td>${String(c.term_no).indexOf('不定期')===0?'不定期（月租）':'第 '+esc(c.term_no)+' 期'}</td>
+      <td><span class="st ${esc(c.status)}">${esc(c.status)}</span>${c.terminate_flag?`<div style="font-size:11px;color:var(--brand)">${esc(c.terminate_flag)}</div>`:''}</td>
       <td>${esc((c.signed_at||'').slice(0,10))}</td>
       <td>
         ${c.status==='待簽' ? `<button class="ghost mini" onclick="navigator.clipboard.writeText('${url}').then(()=>event.target.textContent='已複製')">複製連結</button>` : ''}
-        ${c.status==='在住' ? `<button class="ghost mini" onclick="openHandover('${esc(c.contract_id)}',this)">開點交單</button>` : ''}
+        ${c.status==='在住' ? `<button class="ghost mini" onclick="openHandover('${esc(c.contract_id)}',this)">開點交單</button><button class="ghost mini" onclick="toggleTerminate('${esc(c.contract_id)}',this)">${c.terminate_flag?'取消終止':'標記終止'}</button>` : ''}
         ${c.pdf_id ? `<a class="ghost mini" style="text-decoration:none;padding:5px 10px;border:1px solid var(--line);border-radius:8px" target="_blank" href="https://drive.google.com/file/d/${esc(c.pdf_id)}/view">PDF</a>` : ''}
       </td></tr>`;
   }).join('');
@@ -236,6 +236,14 @@ async function openHandover(cid, btn) {
   await navigator.clipboard.writeText(j.url);
   btn.textContent = '已複製點交連結';
   alert((j.reused?'這筆已有未完成的點交單，':'點交單已建立，')+'連結已複製：\n'+j.url);
+}
+
+async function toggleTerminate(cid, btn) {
+  btn.disabled = true;
+  const j = await api({action:'terminate', pass:PASS, contract_id:cid}, true);
+  btn.disabled = false;
+  if (!j.ok) { alert(j.error); return; }
+  refresh();
 }
 
 // 已登入過就直接進

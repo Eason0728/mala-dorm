@@ -59,6 +59,8 @@ function doPost(e) {
         return jsonOut(createHandover(p, e));
       case 'handoverSign':
         return jsonOut(submitHandover(p, e));
+      case 'terminate':
+        return jsonOut(markTerminate(p, e));
       default:
         return jsonOut({ ok: false, error: '未知的 action：' + p.action });
     }
