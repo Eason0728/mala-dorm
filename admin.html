@@ -88,6 +88,10 @@
         <div><label>通訊地址（選填，同仁簽署時可自填）</label><input id="f_mail_addr"></div>
         <div><label>房間 *</label><select id="f_room"></select></div>
         <div id="bedWrap" style="display:none"><label>床位 *</label><select id="f_bed"></select></div>
+        <div id="occWrap" style="display:none"><label>住宿方式 *</label><select id="f_occ">
+          <option value="自住">自住（3,500／月）</option>
+          <option value="合租">合租（1,750／月）</option>
+        </select></div>
         <div><label>月租金（自動）</label><input id="f_rent" readonly></div>
         <div><label>租期起日 *</label><input type="date" id="f_start"></div>
         <div><label>租期迄日（自動 +6 個月）</label><input id="f_end" readonly></div>
@@ -151,16 +155,25 @@ async function enter(contracts) {
 }
 
 // ── 建單表單連動 ──────────────────────
+function syncRent() {
+  const def = ROOMS.find(r=>r.room===$('f_room').value);
+  if (!def) { $('f_rent').value=''; return; }
+  let rate = {單人房:3500, 雙人房:2000, 四人房:1500}[def.type];
+  if (def.type==='單人房' && $('f_occ').value==='合租') rate = 1750;
+  $('f_rent').value = rate ? rate.toLocaleString() + ' 元' : '';
+}
 $('f_room').onchange = () => {
   const def = ROOMS.find(r=>r.room===$('f_room').value);
-  if (!def) { $('bedWrap').style.display='none'; $('f_rent').value=''; return; }
+  if (!def) { $('bedWrap').style.display='none'; $('occWrap').style.display='none'; $('f_rent').value=''; return; }
   if (def.beds.length) {
     $('bedWrap').style.display='';
     $('f_bed').innerHTML = def.beds.map(b=>`<option>${esc(b)}</option>`).join('');
   } else $('bedWrap').style.display='none';
-  const rate = {單人房:3500, 雙人房:2000, 四人房:1500}[def.type];
-  $('f_rent').value = rate ? rate.toLocaleString() + ' 元' : '';
+  $('occWrap').style.display = def.type==='單人房' ? '' : 'none';
+  if (def.type!=='單人房') $('f_occ').value = '自住';
+  syncRent();
 };
+$('f_occ').onchange = syncRent;
 $('f_start').onchange = () => {
   const v = $('f_start').value; if (!v) return;
   const d = new Date(v); d.setMonth(d.getMonth()+6); d.setDate(d.getDate()-1);
@@ -175,6 +188,7 @@ async function createContract(force) {
     name:$('f_name').value.trim(), mail_addr:$('f_mail_addr').value.trim(),
     room:$('f_room').value, bed: $('bedWrap').style.display==='none' ? '' : $('f_bed').value,
     term_start:$('f_start').value,
+    occupancy: $('occWrap').style.display==='none' ? '' : $('f_occ').value,
     fee_mgmt:$('f_mgmt').value, fee_water:$('f_water').value, fee_power:$('f_power').value,
   };
   for (const [k,lab] of [['name','姓名'],['room','房間'],['term_start','租期起日']])
@@ -218,7 +232,7 @@ function renderList(list) {
     const url = location.origin + location.pathname.replace(/admin\.html$/,'') + 'sign.html?t=' + c.token;
     return `<tr>
       <td>${esc(c.contract_id)}</td><td>${esc(c.name)}</td>
-      <td>${esc(c.room)} ${esc(c.bed||'')}</td>
+      <td>${esc(c.room_bed_display || (c.room+' '+(c.bed||'')))}</td>
       <td>${Number(c.rent).toLocaleString()}</td>
       <td class="${dueSoon?'due':''}">${esc(c.term_start)}<br>～${esc(c.term_end)}${dueSoon?'（30日內到期）':''}</td>
       <td>${String(c.term_no).indexOf('不定期')===0?'不定期（月租）':'第 '+esc(c.term_no)+' 期'}</td>

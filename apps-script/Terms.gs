@@ -156,7 +156,7 @@ function buildPlaceholders(c) {
     phone: c.phone || '',
     mail_addr: c.mail_addr || '',
     property_addr: String(s['property.addr'] || ''),
-    room_bed: (c.room + ' ' + (c.bed || '')).trim(),
+    room_bed: roomBedDisplay(c),
     term_start_roc: fmtRoc(c.term_start),
     term_end_roc: fmtRoc(c.term_end),
     rent: Number(c.rent || 0).toLocaleString(),

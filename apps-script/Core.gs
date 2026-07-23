@@ -148,18 +148,43 @@ function roomTypeOf(room) {
   return hit.type;
 }
 
-function rentOf(room) {
+function rentOf(room, occupancy) {
   const s = getSettings();
+  // 單人房合租（Eason 2026-07-24）：兩人分租一間單人房，每人 1,750
+  if (roomTypeOf(room) === '單人房' && occupancy === '合租') {
+    return Number(s['rate.單人房合租'] || 1750);
+  }
   const rate = s['rate.' + roomTypeOf(room)];
   if (rate === undefined || rate === '') throw new Error('settings 缺少 rate.' + roomTypeOf(room));
   return Number(rate);
 }
 
-/** 該床位目前是否有在住合約 */
-function isOccupied(room, bed) {
-  const rows = readSheet('contracts');
-  return rows.some(function (r) {
-    return r.room === room && String(r.bed || '') === String(bed || '')
-      && (r.status === '待簽' || r.status === '在住');
+/** 房間＋床位的顯示字串（合租加註記） */
+function roomBedDisplay(c) {
+  let t = (c.room + ' ' + (c.bed || '')).trim();
+  if (String(c.room_type) === '單人房合租') t += '（合租）';
+  return t;
+}
+
+/** 占用檢查。回傳 null＝可建；否則回警告文字 */
+function occupancyConflict(room, bed, occupancy) {
+  const active = readSheet('contracts').filter(function (r) {
+    return r.room === room && (r.status === '待簽' || r.status === '在住');
   });
+  const def = ROOMS.filter(function (r) { return r.room === room; })[0];
+  if (def.beds.length > 0) {
+    // 多床房：同床位不得重複
+    const hit = active.filter(function (r) { return String(r.bed || '') === String(bed || ''); });
+    return hit.length ? (room + ' ' + bed + ' 目前已有待簽或在住的合約。') : null;
+  }
+  // 單人房：自住要全空；合租擋自住、上限兩份
+  const solo = active.filter(function (r) { return String(r.room_type) !== '單人房合租'; });
+  const shared = active.filter(function (r) { return String(r.room_type) === '單人房合租'; });
+  if (occupancy === '合租') {
+    if (solo.length) return room + ' 目前有自住合約，無法建立合租。';
+    if (shared.length >= 2) return room + ' 合租已滿（2 人）。';
+    return null;
+  }
+  if (active.length) return room + ' 目前已有' + (shared.length ? '合租' : '') + '合約，無法建立自住。';
+  return null;
 }

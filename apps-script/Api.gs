@@ -65,6 +65,11 @@ function doPost(e) {
         requireAdmin(p);
         cleanupE2E();
         return jsonOut({ ok: true });
+      case 'setSetting':
+        requireAdmin(p);
+        if (!p.key) throw new Error('缺少 key');
+        setSetting(String(p.key), p.value);
+        return jsonOut({ ok: true, key: p.key, value: p.value });
       case 'wipeAll':
         requireAdmin(p);
         if (p.confirm !== 'WIPE') throw new Error('需帶 confirm=WIPE');
@@ -97,10 +102,11 @@ function createContract(p, e) {
   if (roomDef.beds.length === 0 && bed) {
     throw new Error(p.room + ' 是整間出租，不應指定床位');
   }
+  const occupancy = roomDef.type === '單人房' ? (p.occupancy === '合租' ? '合租' : '自住') : '';
 
-  if (!p.force && isOccupied(p.room, bed)) {
-    return { ok: false, warn: '床位重複',
-      message: (p.room + ' ' + bed).trim() + ' 目前已有待簽或在住的合約。確定要建立嗎？' };
+  if (!p.force) {
+    const conflict = occupancyConflict(p.room, bed, occupancy);
+    if (conflict) return { ok: false, warn: '床位重複', message: conflict + '確定要建立嗎？' };
   }
 
   const s = getSettings();
@@ -114,7 +120,9 @@ function createContract(p, e) {
   appendRow('contracts', {
     contract_id: id, token: token,
     name: p.name, id_no: '', phone: '', mail_addr: p.mail_addr || '',  // 身分資料由同仁簽署時自填（Eason 2026-07-23）
-    room: p.room, bed: bed, room_type: roomDef.type, rent: rentOf(p.room),
+    room: p.room, bed: bed,
+    room_type: occupancy === '合租' ? '單人房合租' : roomDef.type,
+    rent: rentOf(p.room, occupancy),
     deposit_type: '免押金', deposit_amt: 0,  // 2026-07-23 Eason：實際未收押金，條文已刪押金敘述
     fee_mgmt: p.fee_mgmt || '由出租人負擔',
     fee_water: p.fee_water || '由出租人負擔',
@@ -130,7 +138,7 @@ function createContract(p, e) {
 
   return {
     ok: true, contract_id: id, token: token,
-    rent: rentOf(p.room), term_start: fmtDate(start), term_end: fmtDate(end),
+    rent: rentOf(p.room, occupancy), term_start: fmtDate(start), term_end: fmtDate(end),
     sign_url: SITE_BASE + 'sign.html?t=' + token,
   };
 }
@@ -139,7 +147,8 @@ function listContracts() {
   return readSheet('contracts').map(function (r) {
     return {
       contract_id: r.contract_id, name: r.name,
-      room: r.room, bed: r.bed, rent: r.rent,
+      room: r.room, bed: r.bed, room_type: r.room_type,
+      room_bed_display: roomBedDisplay(r), rent: r.rent,
       term_start: fmtDate(r.term_start), term_end: fmtDate(r.term_end), term_no: r.term_no,
       status: r.status, terminate_flag: r.terminate_flag,
       signed_at: fmtDateTime(r.signed_at), pdf_id: r.pdf_id, token: r.token,
@@ -159,7 +168,7 @@ function getContractByToken(token, e) {
     contract: {
       contract_id: hit.contract_id, name: hit.name, id_no: hit.id_no,
       phone: hit.phone, mail_addr: hit.mail_addr,
-      room: hit.room, bed: hit.bed, room_bed: (hit.room + ' ' + hit.bed).trim(),
+      room: hit.room, bed: hit.bed, room_bed: roomBedDisplay(hit),
       rent: hit.rent, deposit_type: hit.deposit_type, deposit_amt: hit.deposit_amt,
       term_start: fmtDate(hit.term_start), term_end: fmtDate(hit.term_end),
       terms_ver: hit.terms_ver, pdf_id: hit.pdf_id,

@@ -48,7 +48,7 @@ function getHandoverByToken(token, e) {
     state: h.signed_at ? 'signed' : 'pending',
     handover: {
       handover_id: h.handover_id, contract_id: c.contract_id,
-      name: c.name, room_bed: (c.room + ' ' + (c.bed || '')).trim(),
+      name: c.name, room_bed: roomBedDisplay(c),
       term_start: fmtDate(c.term_start), term_end: fmtDate(c.term_end),
       signed_at: h.signed_at ? fmtDateTime(h.signed_at) : '',
       pdf_url: h.pdf_id ? 'https://drive.google.com/file/d/' + h.pdf_id + '/view' : '',
@@ -164,7 +164,7 @@ function buildHandoverPdf(handoverId) {
   logos.appendInlineImage(Utilities.newBlob(Utilities.base64Decode(LOGO_MOZHU_B64), 'image/jpeg'))
        .setWidth(38).setHeight(36);
   p('承租人歸還設備範圍明細表', { center: true, size: 15, bold: true, before: 4 });
-  p('承租人：' + c.name + '　　房間／床位：' + (c.room + ' ' + (c.bed || '')).trim(), { center: true, size: 10, before: 4 });
+  p('承租人：' + c.name + '　　房間／床位：' + roomBedDisplay(c), { center: true, size: 10, before: 4 });
   p('原租賃期間：' + fmtRoc(c.term_start) + ' 至 ' + fmtRoc(c.term_end)
     + '　　點交日期：' + fmtRoc(h.signed_at || new Date()), { center: true, size: 9 });
 
