@@ -26,8 +26,9 @@ function submitSign(p, e) {
     // 身分資料由同仁自填（後端也驗一次，不信前端）
     const idNo = String(p.id_no || '').trim().toUpperCase();
     const phone = String(p.phone || '').trim();
-    if (!/^[A-Z]{1,2}[0-9]{8,9}$/.test(idNo)) throw new Error('身分證字號（或居留證號）格式不正確');
-    if (!/^[0-9+\-() ]{8,15}$/.test(phone)) throw new Error('聯絡電話格式不正確');
+    // Eason 2026-07-24：身分證＝英文字母開頭＋9 碼數字共 10 碼（第二碼不限，居留證號亦可）；手機＝09 開頭共 10 碼
+    if (!/^[A-Z][0-9]{9}$/.test(idNo)) throw new Error('身分證字號格式不正確（英文字母開頭，共 10 碼）');
+    if (!/^09[0-9]{8}$/.test(phone)) throw new Error('手機號碼格式不正確（09 開頭，共 10 碼）');
 
     const equip = p.equip || [];
     if (!equip.length) throw new Error('缺少設備點收結果');

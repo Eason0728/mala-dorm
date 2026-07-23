@@ -128,6 +128,10 @@ function submitHandover(p, e) {
       '賠償 ' + comp.total + '（' + (comp.lines.join('、') || '無') + '）');
 
     const pdfUrl = buildHandoverPdf(h.handover_id);
+    // 已退宿的合約 PDF 重製為完整版（末頁附點交內容），一份檔案交代完整生命週期
+    try { buildContractPdf(h.contract_id); } catch (err) {
+      logAudit('pdf_rebuild_fail', h.contract_id, null, String(err));
+    }
     return { ok: true, pdf_url: pdfUrl, compensation_total: comp.total, signed_at: ts };
   } finally {
     lock.releaseLock();
@@ -139,13 +143,34 @@ function buildHandoverPdf(handoverId) {
   if (!h) throw new Error('找不到點交單：' + handoverId);
   const c = readSheet('contracts').filter(function (r) { return r.contract_id === h.contract_id; })[0];
   const s = getSettings();
-  const items = JSON.parse(h.items_json || '[]');
 
   const doc = DocumentApp.create('__tmp_' + handoverId);
   const body = doc.getBody();
   body.clear();
-  // 一頁式版面（Eason 2026-07-24）：邊界、字級、圖片全部縮小
+  // 一頁式版面（Eason 2026-07-24）
   body.setMarginTop(34).setMarginBottom(30).setMarginLeft(52).setMarginRight(52);
+  appendHandoverContent(body, h, c, s);
+
+  doc.saveAndClose();
+  const docFile = DriveApp.getFileById(doc.getId());
+  const name = fmtDate(h.signed_at || new Date()) + '_' + c.name + '_設備點交.pdf';
+  const blob = docFile.getAs('application/pdf').setName(name);
+  const folder = DriveApp.getFolderById(String(s['drive.folder_id']));
+  const olds = folder.getFilesByName(name);
+  while (olds.hasNext()) olds.next().setTrashed(true);
+  const pdf = folder.createFile(blob);
+  docFile.setTrashed(true);
+  updateRow('handovers', h._row, { pdf_id: pdf.getId() });
+  logAudit('handover_pdf', h.handover_id, null, name);
+  return pdf.getUrl();
+}
+
+/**
+ * 點交內容渲染（共用）：單獨的點交 PDF 與「已退宿完整版合約 PDF」的附頁都用這一份，
+ * 兩邊各寫一次版面必然不一致——同 Terms.gs 的單一來源原則。
+ */
+function appendHandoverContent(body, h, c, s) {
+  const items = JSON.parse(h.items_json || '[]');
   const FONT = 'Noto Sans TC';
   const p = function (text, opt) {
     const o = opt || {};
@@ -198,13 +223,11 @@ function buildHandoverPdf(handoverId) {
   p('上列金額依宿舍租賃契約第三條第二項約定辦理：經承租人書面確認金額無誤後，得自當期薪資代扣，或由承租人另行以現金、轉帳方式支付。',
     { size: 8, color: '#666666' });
 
-  // 簽名與大章並排一列表格，省直向空間
   const st2 = body.appendTable([['承租人（電子簽名）', '出租人：' + String(s['lessor.name'] || '')]]);
   st2.setBorderWidth(0);
   st2.getCell(0, 0).setFontFamily(FONT).setFontSize(9);
   st2.getCell(0, 1).setFontFamily(FONT).setFontSize(9);
   if (h.sign_img_id) {
-    st2.getCell(0, 0).getChild(0).asParagraph().appendText('\n');
     st2.getCell(0, 0).appendParagraph('').appendInlineImage(
       DriveApp.getFileById(h.sign_img_id).getBlob()).setWidth(140).setHeight(51);
   }
@@ -213,17 +236,4 @@ function buildHandoverPdf(handoverId) {
 
   p('簽署系統紀錄：' + fmtDateTime(h.signed_at) + '　裝置 ' + String(h.signed_ua || '').slice(0, 60)
     + '　單號 ' + h.handover_id, { size: 7, color: '#8a8a8a', before: 4 });
-
-  doc.saveAndClose();
-  const docFile = DriveApp.getFileById(doc.getId());
-  const name = fmtDate(h.signed_at || new Date()) + '_' + c.name + '_設備點交.pdf';
-  const blob = docFile.getAs('application/pdf').setName(name);
-  const folder = DriveApp.getFolderById(String(s['drive.folder_id']));
-  const olds = folder.getFilesByName(name);
-  while (olds.hasNext()) olds.next().setTrashed(true);
-  const pdf = folder.createFile(blob);
-  docFile.setTrashed(true);
-  updateRow('handovers', h._row, { pdf_id: pdf.getId() });
-  logAudit('handover_pdf', h.handover_id, null, name);
-  return pdf.getUrl();
 }

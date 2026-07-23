@@ -151,9 +151,9 @@ function renderActions(equip) {
     <h2>身分資料</h2>
     <p class="hint">請填寫你本人的資料，將載入合約承租人欄。</p>
     <div style="display:grid;gap:10px">
-      <div><label style="font-size:12px;color:var(--muted)">身分證字號（或居留證號）*</label>
+      <div><label style="font-size:12px;color:var(--muted)">身分證字號 *</label>
         <input id="f_id_no" autocapitalize="characters" autocomplete="off" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:7px;font-size:16px;font-family:inherit;background:var(--bg)"></div>
-      <div><label style="font-size:12px;color:var(--muted)">聯絡電話（手機）*</label>
+      <div><label style="font-size:12px;color:var(--muted)">手機號碼 *</label>
         <input id="f_phone" inputmode="tel" autocomplete="tel" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:7px;font-size:16px;font-family:inherit;background:var(--bg)"></div>
       <div><label style="font-size:12px;color:var(--muted)">通訊地址</label>
         <input id="f_mail_addr" autocomplete="street-address" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:7px;font-size:16px;font-family:inherit;background:var(--bg)"></div>
@@ -227,8 +227,8 @@ function idFilled() {
   const id = document.getElementById('f_id_no').value.trim().toUpperCase();
   const ph = document.getElementById('f_phone').value.trim();
   return { id, ph,
-    idOk: /^[A-Z]{1,2}[0-9]{8,9}$/.test(id),
-    phOk: /^[0-9+\-() ]{8,15}$/.test(ph) };
+    idOk: /^[A-Z][0-9]{9}$/.test(id),
+    phOk: /^09[0-9]{8}$/.test(ph) };
 }
 function onChange() {
   const signed = pad.isSigned();
@@ -238,9 +238,9 @@ function onChange() {
   btn.disabled = !(signed && f.idOk && f.phOk);
   const nEquip = equipBoxes.filter(b => b.checked).length;
   if (!f.id) st.textContent = '請填身分證字號';
-  else if (!f.idOk) st.textContent = '身分證字號格式不正確';
+  else if (!f.idOk) st.textContent = '身分證格式：英文字母開頭，共 10 碼';
   else if (!f.ph) st.textContent = '請填聯絡電話';
-  else if (!f.phOk) st.textContent = '聯絡電話格式不正確';
+  else if (!f.phOk) st.textContent = '手機格式：09 開頭共 10 碼';
   else if (!signed) st.textContent = '請先簽名（已點收 ' + nEquip + ' 項設備）';
   else st.textContent = '確認無誤即可送出（點收 ' + nEquip + ' 項設備）';
 }

@@ -127,6 +127,24 @@ function buildContractPdf(contractId) {
     '　連結識別碼 ' + String(c.token || '').slice(0, 8) + '…',
     { size: 7.5, color: '#8a8a8a', before: 14 });
 
+  // 已退宿：末頁附上點交內容，讓這份 PDF 完整涵蓋入住到退宿（Eason 2026-07-24）
+  const signedHandover = readSheet('handovers').filter(function (x) {
+    return x.contract_id === c.contract_id && x.signed_at;
+  }).pop();
+  if (signedHandover) {
+    body.appendPageBreak();
+    appendHandoverContent(body, signedHandover, c, s);
+  }
+
+  // 已退宿：末頁附上點交內容，讓這份 PDF 完整涵蓋入住到退宿（Eason 2026-07-24）
+  const signedHandover = readSheet('handovers').filter(function (x) {
+    return x.contract_id === c.contract_id && x.signed_at;
+  }).pop();
+  if (signedHandover) {
+    body.appendPageBreak();
+    appendHandoverContent(body, signedHandover, c, s);
+  }
+
   doc.saveAndClose();
 
   // ── 匯出、歸檔 ─────────────────────────
