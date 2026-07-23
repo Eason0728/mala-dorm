@@ -61,6 +61,10 @@ function doPost(e) {
         return jsonOut(submitHandover(p, e));
       case 'terminate':
         return jsonOut(markTerminate(p, e));
+      case 'cleanupTest':
+        requireAdmin(p);
+        cleanupE2E();
+        return jsonOut({ ok: true });
       default:
         return jsonOut({ ok: false, error: '未知的 action：' + p.action });
     }

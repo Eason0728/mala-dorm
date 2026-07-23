@@ -42,7 +42,8 @@ function submitSign(p, e) {
     const ts = nowStr();
     const useIp = String(getSettings()['collect.ip']).toUpperCase() === 'TRUE';
     updateRow('contracts', hit._row, {
-      id_no: idNo, phone: phone, mail_addr: String(p.mail_addr || hit.mail_addr || '').trim(),
+      // 前置單引號強制試算表存文字，避免 0987… 被轉成數字吃掉開頭的 0
+      id_no: idNo, phone: "'" + phone, mail_addr: String(p.mail_addr || hit.mail_addr || '').trim(),
       equip_json: JSON.stringify(equip),
       signed_at: ts,
       signed_ip: useIp ? String(p.ip || '') : '（平台不提供）',

@@ -49,9 +49,9 @@ function diagEnsureOwnFolder() {
   return folder.getId();
 }
 
-/** 清掉端對端測試資料：合約、點交單、簽名圖、PDF（姓名「測試端對端」那筆） */
+/** 清掉端對端測試資料：合約、點交單、簽名圖、PDF（姓名「測試」開頭的全部） */
 function cleanupE2E() {
-  const cs = readSheet('contracts').filter(function (r) { return r.name === '測試端對端'; });
+  const cs = readSheet('contracts').filter(function (r) { return String(r.name).indexOf('測試') === 0; });
   const hs = readSheet('handovers');
   let files = 0;
   cs.forEach(function (c) {
