@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宿舍租賃契約 電子化修訂草案 draft 2</title>
+<style>
+  :root{
+    --ink:#1c1a19; --muted:#6b635c; --line:#e0d9d2; --bg:#fbf9f7;
+    --accent:#b3261e; --accent-bg:#fdf3f2; --new-bg:#f2f7f2; --new:#2f6b3a;
+    --card:#fff;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--ink:#eae5e0;--muted:#a8a099;--line:#3a3532;--bg:#1a1817;
+          --accent:#ef8a80;--accent-bg:#2a1e1d;--new-bg:#1c2620;--new:#8fce9c;--card:#221f1e;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang TC","Noto Sans TC","Helvetica Neue",sans-serif;
+    line-height:1.85;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:840px;margin:0 auto;padding:48px 24px 96px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:36px}
+  h1{font-size:26px;margin:0 0 10px;letter-spacing:.02em}
+  .meta{color:var(--muted);font-size:13.5px;line-height:1.7}
+  .warn{background:var(--accent-bg);border-left:3px solid var(--accent);
+    padding:12px 16px;margin:20px 0 0;font-size:14px;border-radius:0 4px 4px 0}
+  h2{font-size:19px;margin:48px 0 14px;padding-top:20px;border-top:1px solid var(--line)}
+  h3{font-size:14px;margin:22px 0 8px;color:var(--muted);font-weight:600;letter-spacing:.06em}
+  ol.principles{padding-left:22px;margin:12px 0}
+  ol.principles li{margin-bottom:8px}
+  blockquote{margin:0;padding:14px 18px;border-radius:5px;font-size:15px;white-space:pre-line}
+  blockquote.old{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+  blockquote.new{background:var(--new-bg);border-left:3px solid var(--new)}
+  .why{font-size:14.5px;color:var(--muted);margin-top:14px}
+  .why strong{color:var(--ink)}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:14.5px}
+  th,td{border-bottom:1px solid var(--line);padding:9px 12px;text-align:left}
+  th{font-weight:600;font-size:13px;color:var(--muted);letter-spacing:.04em}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .tag{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:99px;
+    background:var(--new-bg);color:var(--new);margin-left:8px;vertical-align:middle;letter-spacing:.05em}
+  .tag.q{background:var(--accent-bg);color:var(--accent)}
+  .scroll{overflow-x:auto}
+  .toc{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px 20px;margin:24px 0;font-size:14.5px}
+  .toc ul{margin:8px 0 0;padding-left:20px;columns:2;column-gap:32px}
+  .toc li{margin-bottom:4px;break-inside:avoid}
+  .mock{display:flex;gap:18px;flex-wrap:wrap;margin:18px 0}
+  .phone{flex:1 1 260px;min-width:250px;border:1px solid var(--line);border-radius:14px;
+    background:var(--card);padding:16px;font-size:13.5px}
+  .phone .cap{font-size:11.5px;color:var(--muted);letter-spacing:.08em;margin-bottom:10px}
+  .field{background:var(--bg);border:1px solid var(--line);border-radius:4px;
+    padding:7px 10px;margin:6px 0;font-size:14px}
+  .field .lbl{font-size:11px;color:var(--muted);display:block}
+  footer{margin-top:56px;padding-top:24px;border-top:1px solid var(--line);
+    font-size:14.5px;color:var(--muted)}
+  footer ol{padding-left:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>宿舍租賃契約　電子化修訂草案</h1>
+  <div class="meta">
+    <strong>draft 2.3</strong>／2026-07-23（第五輪九項：付款方式全面改為確認後支付、刪押金、期滿轉不定期租約、第十二條加第八款與七日遷出等）<br>
+    底本：鼎兆元宿舍合約.docx（十七條＋承租人歸還設備範圍明細表）
+  </div>
+  <div class="warn"><strong>內部討論用草案，非法律意見。</strong>上線前建議把定稿交會計師或法務過目一次。</div>
+</header>
+
+<h2 style="border-top:none;padding-top:0">修訂原則</h2>
+<ol class="principles">
+  <li><strong>只改「線上簽不了」或你指定要改的地方</strong>，其餘實體條款一律不動。</li>
+  <li><strong>條號不重排</strong>：新條文加在最後（第十八條），避免既有交互引用全部要跟著改。</li>
+  <li>新給的宿舍規範做成<strong>附件二</strong>，與第六條「承租人同意遵守宿舍規約」直接扣上，
+      與合約條文重複的部分已刪除並標註。</li>
+</ol>
+
+<div class="toc">
+  <strong>draft 2.3 共 12 處</strong>（第五輪：G、H、I、K、F、J 大改，新增 L）
+  <ul>
+    <li>A　第一條　租賃範圍</li>
+    <li>B　第八條　出租人出示文件</li>
+    <li>C　第九條　承租人身分核對</li>
+    <li>D　第十六條　正本各自下載</li>
+    <li>E　第十八條　電子簽署效力（新增）</li>
+    <li>F　附表　賠償單價</li>
+    <li>G　第二條　半年一簽、自動續約</li>
+    <li>H　第三條　租金金額＋薪資扣款授權</li>
+    <li>I　第十一條　清潔費 3,000（新增）</li>
+    <li>J　附件二　宿舍規約（新增）</li>
+    <li>K　第四條　不收取押金</li>
+    <li>L　第十二條　七日遷出＋身分不符款（新增）</li>
+  </ul>
+</div>
+
+<h2>A.　第一條（二）租賃範圍 — 改為填入式 <span class="tag">呈現方式已調整</span></h2>
+<h3>原文</h3>
+<blockquote class="old">(二)租賃範圍：
+1、租賃住宅□全部□部分：第　　層□房間　　間□第　　室，</blockquote>
+<h3>修訂後</h3>
+<blockquote class="new">(二)租賃範圍：
+1、承租人承租之房間／床位為：<strong>三樓　1 號房　雙人床位 A</strong>
+（房間／床位由出租人於簽約時載明，範圍以本項所載者為限；房間內非屬其承租範圍之區域及他人床位，不得占用。）</blockquote>
+
+<p class="why"><strong>為什麼從勾選改成填入：</strong>房間是你建合約單時就選定的，同仁沒有選擇權，
+放一整排勾選方格只是紙本時代的做法。改成填入式後，同仁在手機上看到的是「已經寫好的事實」，
+不是要他自己勾的空格——這也讓 PDF 乾淨很多。</p>
+
+<div class="mock">
+  <div class="phone">
+    <div class="cap">你（管理端，建合約單時）</div>
+    <div class="field"><span class="lbl">房間</span>三樓 1 號房　▾</div>
+    <div class="field"><span class="lbl">床位</span>雙人床位 A　▾</div>
+    <div class="field"><span class="lbl">月租金（依房型自動帶入）</span>2,000 元</div>
+  </div>
+  <div class="phone">
+    <div class="cap">同仁（手機簽署畫面，不可改）</div>
+    <div style="font-size:12px;color:var(--muted)">第一條　租賃標的</div>
+    <div class="field" style="background:var(--card);color:var(--muted)">
+      門牌：新竹市光復路一段 435 號<br>
+      租賃範圍：<strong style="color:var(--ink)">三樓 1 號房 雙人床位 A</strong>
+    </div>
+    <div style="font-size:12px;color:var(--muted)">附屬設備（請點收）</div>
+    <div class="field">☑ 桌子　☑ 椅子　☑ 床架　☑ 床墊<br>☑ 衣櫃　☑ 房間鑰匙　☑ 大門遙控器</div>
+  </div>
+</div>
+<p class="why">同仁在手機上唯一要動手的是<strong>附屬設備點收</strong>（東西真的都在嗎）和最後的簽名，其餘都是唯讀。</p>
+
+<h2>B.　第八條第一項 — 出租人出示證明文件的方式</h2>
+<h3>原文</h3>
+<blockquote class="old">出租人應出示有權出租本租賃住宅之證明文件及國民身分證或其他足資證明身分之文件，供承租人核對。</blockquote>
+<h3>修訂後</h3>
+<blockquote class="new">出租人應提供有權出租本租賃住宅之證明文件及其身分證明文件，供承租人核對；以電子方式簽訂本契約者，得以電子檔提供或於承租人要求時當面出示。</blockquote>
+<p class="why"><strong>為什麼改：</strong>線上簽署沒有「當面出示」這個動作，但這是出租人的法定義務，不能刪，改成兩種方式擇一。</p>
+
+<h2>C.　第九條第一項 — 承租人身分核對的方式</h2>
+<h3>原文</h3>
+<blockquote class="old">承租人應於簽訂本契約時，出示國民身分證或其他足資證明身分之文件，供出租人核對。</blockquote>
+<h3>修訂後</h3>
+<blockquote class="new">承租人應於簽訂本契約時，填載其國民身分證統一編號等身分資料，供出租人核對；出租人得另行要求承租人出示國民身分證或其他足資證明身分之文件正本核對。
+承租人保證所填載之身分資料真實正確，如有不實，出租人得依第十二條規定終止本契約。</blockquote>
+<p class="why"><strong>為什麼改：</strong>線上簽時同仁只填身分證字號、不上傳影本（個資最小化）。補「得另行要求出示正本」保留你當面核對的權利，補「保證真實」讓填假資料有處理依據。</p>
+
+<h2>D.　第十六條 — 正本由雙方各自下載留存 <span class="tag">依指示改寫</span></h2>
+<h3>原文</h3>
+<blockquote class="old">本契約自簽約日起生效，租賃雙方各執一份契約正本。</blockquote>
+<h3>修訂後</h3>
+<blockquote class="new">本契約自雙方完成簽署之日起生效。
+本契約以電子文件方式作成，於雙方完成電子簽署後，由出租人及承租人各自下載留存一份，不另行提供紙本。該電子文件與紙本正本具同等效力。</blockquote>
+<p class="why">照你的話改寫：明確寫「不另行提供紙本」，把紙本這條路關掉。</p>
+
+<h2>E.　新增 第十八條 — 電子簽署之效力 <span class="tag">本次核心</span></h2>
+<blockquote class="new"><strong>第十八條　電子簽署之效力</strong>
+
+一、租賃雙方同意本契約及其附件（含承租人歸還設備範圍明細表、宿舍規約）得以電子文件方式作成，並以電子簽章方式簽署。雙方同意依電子簽章法規定，該電子文件與電子簽章與紙本文件及手寫簽名、蓋章具同等效力，任一方不得僅因其為電子形式而否認其效力。
+
+二、承租人於出租人指定之簽署系統上，以手寫方式繪製簽名並完成送出者，視為承租人本人之簽名。承租人應妥善保管出租人提供之專屬簽署連結，不得交付他人使用。
+
+三、雙方同意出租人之簽署系統所記錄之簽署時間、簽署內容及相關連線軌跡，得作為雙方簽署本契約之證明。
+
+四、出租人應保存前項電子文件及紀錄至租賃關係消滅後五年；承租人於租賃關係存續期間及消滅後五年內，得請求出租人提供本契約電子檔或列印本。</blockquote>
+<p class="why"><strong>設計說明</strong>（給你判斷用，不是條文內容）：<br>
+・第二項把「手指畫的簽名＝本人簽名」講明，並把「連結別給別人」的責任放在承租人身上——這是自建方案（不做簡訊驗證碼）證據力的關鍵一句。<br>
+・第三項把系統紀錄（時間戳、簽署內容、裝置資訊、專屬連結識別碼）的證據地位講明，取代第三方時間戳。Eason 2026-07-23 確認不收集 IP。<br>
+・第四項的「五年」可改三年或十年，只要雲端硬碟資料夾照留就行。<br>
+・第一項已把新增的<strong>宿舍規約</strong>一併納入電子簽署範圍。</p>
+
+<h2>F.　附表「承租人歸還設備範圍明細表」 — 加賠償單價 <span class="tag">已刪來源欄</span></h2>
+<h3>修訂後欄位</h3>
+<blockquote class="new">設備項目｜數量｜賠償單價｜是否正常（異常請說明）｜是否歸還</blockquote>
+<div class="scroll">
+<table>
+  <thead><tr><th>設備項目</th><th>數量</th><th>賠償單價</th></tr></thead>
+  <tbody>
+    <tr><td>書桌</td><td>1</td><td class="num">2,000</td></tr>
+    <tr><td>椅子</td><td>1</td><td class="num">1,000</td></tr>
+    <tr><td>床架</td><td>1</td><td class="num">3,500</td></tr>
+    <tr><td>床墊</td><td>1</td><td class="num">3,500</td></tr>
+    <tr><td>衣櫃</td><td>1</td><td class="num">4,000</td></tr>
+    <tr><td>房間鑰匙</td><td>1</td><td class="num">100</td></tr>
+    <tr><td>大門遙控器</td><td>1</td><td class="num">800</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>表尾新增一段</h3>
+<blockquote class="new">點交時經雙方確認為異常（可歸責於承租人）或未歸還之設備，承租人應按上表賠償單價賠償，合計金額為新臺幣＿＿＿＿元整；賠償金額依本契約第三條第二項約定辦理（經承租人書面確認金額無誤後，自當期薪資代扣或以現金、轉帳支付）。
+前項賠償單價得由出租人於每年檢討調整，並於簽約時以簽約當時公告之單價為準。</blockquote>
+<p class="why"><strong>設計說明：</strong>單價的法律效果來自「簽約時同仁就看到並同意這張表」，所以這張表要在<strong>簽合約時</strong>就一起呈現，不是等退宿才第一次看到。</p>
+
+<h2>G.　第二條 租賃期間 — 半年一簽、期滿自動延長半年 <span class="tag">本輪新增</span></h2>
+<h3>原文</h3>
+<blockquote class="old">租賃期間自民國　年　月　日起至民國　年　月　日止。
+(租賃期間至少三十日以上，合約期滿後如有續住得展延一年，以此類推，不另簽合約)</blockquote>
+<h3>修訂後</h3>
+<blockquote class="new">租賃期間自民國　　年　　月　　日起至民國　　年　　月　　日止，<strong>為期六個月</strong>。
+租賃期間內，除依第十二條、第十三條規定得提前終止租約外，承租人不得要求換房或退租；換房或退租均應於租賃期間屆滿時為之。
+承租人如欲於期間屆滿時換房或退租，應於屆滿前一個月通知出租人；未於期限內通知者，本契約自期間屆滿之次日起<strong>轉為不定期租賃（月租制）</strong>，租賃條件不變，任一方得以一個月前之通知終止之。</blockquote>
+<p class="why"><strong>照你的話寫：</strong>半年一簽、期滿才能換房或退租、續租自動延半年不另簽。<br>
+我補了「應於屆滿前一個月通知」——不補的話「自動延長」和「期滿可退租」會打架（同仁月底才說要走，你已經自動續約了）。一個月是配合第十條原本就有的先期通知期。<strong>要改成兩週或兩個月都可以。</strong><br>
+另外保留第十二、十三條的提前終止（例如同仁離職、房子有安全瑕疵），這些是法定或原契約既有的，不受「半年內不得退租」限制。</p>
+
+<h2>H.　第三條 租金 — 只顯示該同仁金額 <span class="tag">第四輪調整</span></h2>
+<h3>原文</h3>
+<blockquote class="old">承租人每月租金為新臺幣(下同)　　元整，並由薪資直接扣款，不得藉任何理由拖延或拒絕；出租人於租賃期間調漲租金應於一個月前告知，並重新簽訂合約。</blockquote>
+<h3>修訂後</h3>
+<blockquote class="new">本契約承租人應負擔之住宿費用為每月新臺幣 <strong>＿＿＿＿</strong> 元整，經雙方確認金額後支付，或依公司代扣流程辦理。
+<strong>本契約及其附件所生應由承租人負擔之各項費用（含住宿費用、設備賠償金、清潔費用），經承租人書面確認金額無誤後，得自當期薪資代扣，或由承租人另行以現金、轉帳方式支付。</strong>
+（第五輪：刪除「出租人於租賃期間調漲住宿費用…」單方調漲條款——維護租期內租金穩定。）</blockquote>
+<p class="why"><strong>2026-07-23 第四輪調整：房型費率清單不顯示在合約上。</strong>
+同仁只需要看到自己那筆金額，不必看到別人房型多少錢——單人房 3,500／雙人房 2,000／四人房 1,500
+這份費率表改為只存在系統設定與附件二的繳費說明中，合約條文只留該同仁的實際金額。<br>
+系統上你選了房型，金額自動帶入，不用手打。<br>
+<strong>末項是本輪新加的薪資扣款總授權</strong>：你說清潔費從薪資扣除，賠償金原本也走薪資，
+與其散在各條各寫一次，不如在第三條一次講明「本約所生費用均得自薪資扣除」——
+這也是勞基法上工資全額給付原則的例外要件（取得勞工同意），簽這份約就是同意，寫在條文裡最穩。</p>
+
+<h2>I.　第十一條 租賃住宅之返還 — 新增清潔費 <span class="tag">本輪新增</span></h2>
+<h3>新增為第十一條第三項</h3>
+<blockquote class="new">承租人返還租賃住宅時，未將房間回復原狀，或留有私人物品致出租人須另行清理者，出租人得酌收清潔費用新臺幣三千元整，經承租人書面確認金額無誤後，得自當期薪資代扣，或由承租人另行以現金、轉帳方式支付。</blockquote>
+<p class="why">放在第十一條（返還與點交）而不是第十四條（遺留物），因為「未復原」和「留東西」是同一個退房場景的兩種狀況，放一起才好引用。第十四條原本的遺留物視為拋棄所有權那段維持原樣，兩條不衝突：<strong>3,000 元是清理的錢，第十四條處理的是東西的所有權。</strong><br>
+<strong>本輪已依你的指示改為薪資扣除為主</strong>（押金抵充留作備位——集團內同仁本來就沒押金，只有集團外同仁有）。</p>
+
+<h2>J.　新增 附件二　宿舍規約 <span class="tag">本輪新增</span></h2>
+<p class="why">第六條原本就寫「承租人同意遵守宿舍規約應遵行事項」，但過去沒有附上規約本文。
+現在把你給的規範做成附件二，簽約時一起呈現、一起簽署（第十八條第一項已納入）。
+<strong>已刪除的重複項</strong>：住宿費用費率（移入第三條）。其餘全數保留原文。</p>
+
+<blockquote class="new"><strong>附件二　鼎兆元員工宿舍規約</strong>
+
+<strong>一、繳費方式</strong>
+承租人應負擔之住宿費用依本契約第三條約定辦理。
+宿舍費用之門市負擔部分，由各門市會計依總部公告之分攤標準，一律匯至鼎兆元總部。
+
+<strong>二、宿舍長</strong>
+宿舍長：小辛辣－蕭彣芳（0922-568551）
+協助處理住宿同仁的需求，並維護宿舍安全。有任何住宿問題，請直接聯繫宿舍長彣芳。
+
+<strong>三、節約能源</strong>
+・隨手關閉沒在使用的水與電源。
+・長時間離開房間者，請關閉電源和拔插頭（含行動電源充電）。
+・外出超過 1 小時以上，請務必關冷氣。
+・經查外出逾 1 小時未關冷氣者，收取「愛護北極熊費用」500 元／次，以次計算、無上限，<strong>由宿舍長當場以現金收取；該筆費用將入小辛辣光復店，作為補貼電費之用</strong>。
+・通報屬實之吹哨者，可獲得 300 元。
+
+<strong>四、房間安全規範</strong>
+・房間內禁止喝酒、吸毒、使用任何火源（含抽煙、烹飪、加熱）。
+・不得讓非住宿同仁進入房間。
+・違反上述規範者，依情節輕重予以警告或取消住宿資格。
+
+<strong>五、鐵門與遙控器</strong>
+一樓為小辛辣營業場所。請住宿夥伴妥善保管自己的鐵門遙控器。
+若在營業期間因個人因素導致鐵門落下關閉：
+・第一次：警告
+・第二次：取消住宿資格
+
+<strong>六、每月房間檢查</strong>
+為確保居住舒適，宿舍長每月檢查各房間一次：確認濾網是否乾淨、有無違禁品或垃圾堆積。
+・每月將於宿舍群組提前通知具體檢查時間。
+・不會進入房間內，只在門口查看，請協助配合。
+
+<strong>七、環境維護</strong>
+・廁所：二樓女生使用｜三樓男生使用
+・各樓層廁所整潔由使用者共同維護
+・自己房間內、房門口走道請保持乾淨
+・樓梯、四樓洗衣間由宿舍長協助處理
+
+<strong>八、違反規約之效果</strong>
+承租人違反本規約，經出租人或宿舍長勸導仍不改善者，出租人得依情節輕重予以警告或取消住宿資格；取消住宿資格者，依本契約第十二條規定終止租約。</blockquote>
+
+<p class="why"><strong>我加的只有第八點</strong>：規約裡「取消住宿資格」出現三次，但沒有一條把它接回合約的終止機制，
+等於規定沒有出口。第八點是把它接上第十二條。<strong>不要的話刪掉即可</strong>，只是屆時「取消住宿資格」的法律效果會比較模糊。</p>
+
+<h2>K.　第四條 押金 — 廢除短期免押金 <span class="tag">第三輪新增</span></h2>
+<h3>原文</h3>
+<blockquote class="old">□集團內同仁；不收取押金。
+□短期居住兩個月內；不收取押金
+□集團外同仁；收取押金現金一個月，金額＿＿＿＿＿＿＿元整。
+押金於租貸合約結束後，無任何衍生費用時，返還現金。</blockquote>
+<h3>修訂後</h3>
+<blockquote class="new">本契約不收取押金。</blockquote>
+<p class="why"><strong>依你的指示廢除「短期居住兩個月內不收押金」</strong>——改半年一簽後，兩個月的短期住宿在制度上已不存在，
+留著只會變成死條文。同時把返還時點補上「完成點交且無衍生費用」，
+和第十一條的點交、清潔費、賠償金串起來（原文只寫「無任何衍生費用」，沒說要先點交）。</p>
+
+<h2>L.　第十二條 — 七日遷出＋新增身分不符款 <span class="tag">第五輪新增</span></h2>
+<h3>原文</h3>
+<blockquote class="old">租賃期間有下列情形之一者，出租人得提前終止租約，且承租人不得要求任何賠償：
+（一）～（七）…</blockquote>
+<h3>修訂後</h3>
+<blockquote class="new">租賃期間有下列情形之一者，出租人得提前終止租約，承租人應於合約終止後七日內遷出：
+（一）～（六）原文照舊
+（七）承租人不再是鼎兆元集團旗下任一品牌員工。
+<strong>（八）承租人提供之身分證明文件與事實不符者。（新增）</strong></blockquote>
+<p class="why">標題句的「不得要求任何賠償」依指示改為「七日內遷出」——把重點從賠償問題移到遷出時限。
+（七）維持原文：離職即構成出租人的終止事由。第十三條承租人那側的「出租人不得要求任何賠償」未動。
+新增（八）與第九條「保證身分資料真實」相互扣上，填假資料有了明確的終止依據。</p>
+
+<h2>第三輪指示的處理結果 <span class="tag">已全部落地</span></h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>你說的</th><th>改在哪裡</th></tr></thead>
+  <tbody>
+    <tr><td>北極熊費用當下現場收現金</td><td>附件二 第三點，加註「由宿舍長當場以現金收取」</td></tr>
+    <tr><td>清潔費從薪資扣除</td><td>I（第十一條）改為薪資扣除為主；並在 H（第三條）加一項薪資扣款總授權</td></tr>
+    <tr><td>短期居住不收押金廢除</td><td>K（第四條）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>沒有動到的部分（確認用）</h2>
+<p class="why">第五條管理費水電費、第六條使用限制、第七條修繕、第十條任意終止、
+第十二條出租人提前終止（含第七款「不再是鼎兆元集團員工」）、第十三條承租人提前終止、
+第十四條遺留物、第十五條通知地址、第十七條未盡事宜——<strong>全部原文照舊</strong>。</p>
+
+<footer>
+  <strong style="color:var(--ink)">下一步</strong>
+  <ol>
+    <li>你看這份 draft 2.1，逐項回「可以／要改成…／這條不要」；沒問題的話就是定稿。</li>
+    <li>建議把定稿交會計師或法務看一次（特別是 E 第十八條、G 自動續約、H 薪資扣款授權、I 清潔費）。</li>
+    <li>定稿後寫進 spec.md，作為系統要渲染的合約內容本體，再開始寫程式。</li>
+  </ol>
+</footer>
+
+</div>
+</body>
+</html>

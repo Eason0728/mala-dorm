@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宿舍合約線上簽核系統 spec</title>
+<style>
+  :root{
+    --ink:#1c1a19; --muted:#6b635c; --line:#e0d9d2; --bg:#fbf9f7; --card:#fff;
+    --accent:#b3261e; --accent-bg:#fdf3f2; --ok:#2f6b3a; --ok-bg:#f2f7f2;
+    --code:#f0ece8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--ink:#eae5e0;--muted:#a8a099;--line:#3a3532;--bg:#1a1817;--card:#221f1e;
+          --accent:#ef8a80;--accent-bg:#2a1e1d;--ok:#8fce9c;--ok-bg:#1c2620;--code:#2a2624;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang TC","Noto Sans TC","Helvetica Neue",sans-serif;
+    line-height:1.8;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:48px 24px 96px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:32px}
+  h1{font-size:26px;margin:0 0 10px}
+  .meta{color:var(--muted);font-size:13.5px;line-height:1.7}
+  h2{font-size:19px;margin:46px 0 14px;padding-top:20px;border-top:1px solid var(--line)}
+  h2:first-of-type{border-top:none;padding-top:0}
+  h3{font-size:15.5px;margin:26px 0 8px}
+  p,li{font-size:15px}
+  code{background:var(--code);padding:1px 6px;border-radius:3px;font-size:13.5px;
+    font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+  th,td{border-bottom:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{font-weight:600;font-size:12.5px;color:var(--muted);letter-spacing:.04em}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .scroll{overflow-x:auto}
+  .note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--muted);
+    padding:12px 16px;margin:16px 0;font-size:14.5px;border-radius:0 4px 4px 0}
+  .warn{background:var(--accent-bg);border-left:3px solid var(--accent);
+    padding:12px 16px;margin:16px 0;font-size:14.5px;border-radius:0 4px 4px 0}
+  .ok{background:var(--ok-bg);border-left:3px solid var(--ok);
+    padding:12px 16px;margin:16px 0;font-size:14.5px;border-radius:0 4px 4px 0}
+  .arch{background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:20px;margin:20px 0;font-size:13.5px;line-height:1.9;overflow-x:auto}
+  .arch pre{margin:0;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12.5px;line-height:1.75}
+  .screens{display:flex;gap:16px;flex-wrap:wrap;margin:20px 0}
+  .screen{flex:1 1 250px;min-width:240px;border:1px solid var(--line);border-radius:12px;
+    background:var(--card);padding:16px;font-size:13px}
+  .screen .cap{font-size:11.5px;color:var(--muted);letter-spacing:.08em;margin-bottom:10px;
+    padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .box{background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px;margin:6px 0}
+  .box .lbl{font-size:10.5px;color:var(--muted);display:block;letter-spacing:.05em}
+  .btn{background:var(--ink);color:var(--bg);border-radius:5px;padding:8px;text-align:center;
+    margin-top:10px;font-size:13px;font-weight:600}
+  ol,ul{padding-left:22px}
+  li{margin-bottom:5px}
+  .phase{font-size:12px;color:var(--muted);letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>宿舍合約線上簽核系統　規格書（spec）</h1>
+  <div class="meta">
+    draft 1／2026-07-23<br>
+    上游文件：requirements.md（需求）、contract-amendment-draft.html（條文 draft 2.1，已定稿）<br>
+    專案目錄：<code>~/mala-dorm-contract/</code>
+  </div>
+</header>
+
+<h2>1. 系統總覽</h2>
+<p>沿用你既有自動化的同一套骨架（<code>mala-clock-in</code>／<code>mala-staff-eval</code>）：
+靜態前端放 GitHub Pages，後端一支 Google Apps Script Web App，資料存 Google 試算表，PDF 存雲端硬碟。
+不需要伺服器、不需要月費、資料全部在你自己的 Google 帳號裡。</p>
+
+<div class="arch"><pre>
+  ┌─────────────── GitHub Pages（靜態，免費）───────────────┐
+  │  admin.html      建合約單／發連結／看清單／開點交單        │
+  │  sign.html       同仁簽合約（手機）                       │
+  │  handover.html   同仁簽退宿點交（手機）                   │
+  └───────────────────────┬───────────────────────────────┘
+                          │  HTTPS + JSON（?token=xxx）
+                          ▼
+  ┌────────── Google Apps Script Web App（後端）────────────┐
+  │  doGet   讀合約內容、驗 token、擋重簽                     │
+  │  doPost  收簽名 → 寫試算表 → 產 PDF → 存雲端硬碟          │
+  │  trigger 每天 03:00 檢查到期 → 自動續約半年               │
+  └───────┬──────────────────────────┬────────────────────┘
+          ▼                          ▼
+  ┌──────────────┐          ┌────────────────────────────┐
+  │ Google 試算表 │          │ 雲端硬碟資料夾              │
+  │ 合約／點交／  │          │ 193VGXJjRsrrS_jl6MVYzwOt…  │
+  │ 設定／稽核    │          │ 簽好的 PDF                  │
+  └──────────────┘          └────────────────────────────┘
+</pre></div>
+
+<h2>2. 三個畫面</h2>
+
+<div class="screens">
+  <div class="screen">
+    <div class="cap">admin.html（你，桌機）</div>
+    <div class="box"><span class="lbl">承租人</span>王小明</div>
+    <div class="box"><span class="lbl">房間 ▾</span>三樓 1 號房</div>
+    <div class="box"><span class="lbl">床位 ▾</span>雙人床位 A</div>
+    <div class="box"><span class="lbl">月租金（自動）</span>2,000 元</div>
+    <div class="box"><span class="lbl">租期起（自動 +6 月）</span>115/08/01 – 116/01/31</div>
+    <div class="btn">產生簽署連結</div>
+  </div>
+  <div class="screen">
+    <div class="cap">sign.html（同仁，手機）</div>
+    <div class="box" style="text-align:center;padding:14px 10px">
+      <span style="font-size:11px;color:var(--muted)">封面</span><br>
+      <strong>鼎兆元餐飲集團</strong><br>宿舍租賃契約書<br>
+      <span style="font-size:11.5px;color:var(--muted)">王小明／三樓1號房 雙人床位A<br>115.08.01–116.01.31</span>
+    </div>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:8px">↓ 捲動：十八條＋附件一＋附件二</div>
+    <div class="box"><span class="lbl">附屬設備點收</span>☑桌 ☑椅 ☑床架 ☑床墊 ☑衣櫃 ☑鑰匙 ☑遙控器</div>
+    <div class="box" style="height:52px"><span class="lbl">手寫簽名</span></div>
+    <div class="btn">確認送出</div>
+  </div>
+  <div class="screen">
+    <div class="cap">handover.html（退宿點交）</div>
+    <div class="box"><span class="lbl">書桌（2,000）</span>○正常 ○異常　○歸還 ○未還</div>
+    <div class="box"><span class="lbl">椅子（1,000）</span>○正常 ○異常　○歸還 ○未還</div>
+    <div style="font-size:11.5px;color:var(--muted)">…七項</div>
+    <div class="box"><span class="lbl">房間復原 / 遺留物</span>□需清潔（＋3,000）</div>
+    <div class="box"><span class="lbl">應賠償合計（自動）</span><strong>4,100 元</strong></div>
+    <div class="btn">確認送出</div>
+  </div>
+</div>
+
+<h3>封面規格（PDF 第 1 頁 ＝ 手機第一屏）</h3>
+<p>依你 2026-07-23 指示，封面同時出現在 PDF 與手機。內容：
+<strong>麻的小辛辣＋墨竹亭兩個品牌 logo 並排</strong>、鼎兆元餐飲集團、大章、標題、
+承租人姓名、租賃標的（門牌＋房間床位）、租賃期間、簽署日期。
+手機版縮成一屏高度，往下捲即進條文；PDF 版維持原檔的整頁封面＋分頁。</p>
+
+<h2>3. 資料模型（Google 試算表，4 個工作表）</h2>
+
+<h3>3.1 contracts（合約）</h3>
+<div class="scroll"><table>
+<thead><tr><th>欄位</th><th>型別</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>contract_id</td><td>字串</td><td><code>C-20260801-001</code>（簽發日＋流水號，逐字元格式：<code>C-YYYYMMDD-NNN</code>）</td></tr>
+<tr><td>token</td><td>字串</td><td>簽署連結隨機碼，32 字元（見 §6）</td></tr>
+<tr><td>name / id_no / phone / mail_addr</td><td>字串</td><td>承租人姓名、身分證統一編號、電話、通訊地址</td></tr>
+<tr><td>room / bed</td><td>字串</td><td>房間、床位（無床位者留空），選項見 §3.5</td></tr>
+<tr><td>rent</td><td>數字</td><td>月租金，依房型自動帶入</td></tr>
+<tr><td>deposit_type / deposit_amt</td><td>字串／數字</td><td><code>集團內免押</code>｜<code>集團外一個月</code></td></tr>
+<tr><td>fee_mgmt / fee_water / fee_power</td><td>字串</td><td>第五條各費用由誰負擔</td></tr>
+<tr><td>term_start / term_end</td><td>日期</td><td>租期起訖，固定六個月</td></tr>
+<tr><td>term_no</td><td>整數</td><td>第幾期（自動續約 +1）</td></tr>
+<tr><td>status</td><td>字串</td><td><code>待簽</code>→<code>在住</code>→<code>已退宿</code>／<code>作廢</code></td></tr>
+<tr><td>equip_json</td><td>JSON</td><td>簽約時同仁點收的七項設備結果</td></tr>
+<tr><td>signed_at / signed_ip / signed_ua</td><td>字串</td><td>存證三件組</td></tr>
+<tr><td>sign_img_id</td><td>字串</td><td>手寫簽名圖（PNG）在雲端硬碟的檔案 ID</td></tr>
+<tr><td>pdf_id</td><td>字串</td><td>合約 PDF 檔案 ID</td></tr>
+<tr><td>terms_ver</td><td>字串</td><td>條文版本，例 <code>2026-07-23-v2.1</code>（日後改條文，舊約仍指向舊版本）</td></tr>
+</tbody></table></div>
+
+<h3>3.2 handovers（退宿點交）</h3>
+<p><code>handover_id</code>（<code>H-YYYYMMDD-NNN</code>）、<code>contract_id</code>、<code>token</code>、
+七項設備各自的 <code>正常/異常+說明</code> 與 <code>歸還/未還</code>、<code>need_cleaning</code>（是否收 3,000）、
+<code>compensation_total</code>、簽署三件組、<code>pdf_id</code>。</p>
+
+<h3>3.3 settings（設定，你可自行改，不用改程式）</h3>
+<div class="scroll"><table>
+<thead><tr><th>key</th><th>預設值</th></tr></thead>
+<tbody>
+<tr><td>rate.單人房 / 雙人房 / 四人房</td><td>3,500／2,000／1,500</td></tr>
+<tr><td>price.書桌…大門遙控器</td><td>2,000／1,000／3,500／3,500／4,000／100／800</td></tr>
+<tr><td>fee.cleaning</td><td>3,000</td></tr>
+<tr><td>lessor.*</td><td>出租人名稱、統編、地址、電話</td></tr>
+<tr><td>term.months / renew.notice_days</td><td>6／30</td></tr>
+<tr><td>notify.email</td><td>madesiaosinla@gmail.com</td></tr>
+<tr><td>drive.folder_id</td><td>193VGXJjRsrrS_jl6MVYzwOtNTTJUVmUO</td></tr>
+</tbody></table></div>
+
+<h3>3.4 audit_log（稽核）</h3>
+<p>每一次開啟連結、送出、產 PDF、自動續約都寫一列：時間、事件、contract_id、IP、User-Agent、摘要。
+這張表是第十八條第三項「系統紀錄得作為簽署證明」的實體。<strong>只增不改</strong>。</p>
+
+<h3>3.5 房間與費率對照</h3>
+<div class="scroll"><table>
+<thead><tr><th>房間</th><th>床位</th><th>房型</th><th>月租金</th></tr></thead>
+<tbody>
+<tr><td>二樓 單人房</td><td>—</td><td>單人房</td><td class="num">3,500</td></tr>
+<tr><td>二樓 四人房</td><td>1／2／3／4 號床位</td><td>四人房</td><td class="num">1,500</td></tr>
+<tr><td>三樓 單人房</td><td>—</td><td>單人房</td><td class="num">3,500</td></tr>
+<tr><td>三樓 1 號房</td><td>雙人床位 A／B</td><td>雙人房</td><td class="num">2,000</td></tr>
+<tr><td>三樓 2 號房</td><td>—</td><td>單人房</td><td class="num">3,500</td></tr>
+<tr><td>三樓 3 號房</td><td>雙人床位 A／B</td><td>雙人房</td><td class="num">2,000</td></tr>
+</tbody></table></div>
+<div class="ok"><strong>已確認（Eason 2026-07-23）：</strong>三樓 2 號房為單人房，月租金 3,500 元。
+六種房間、11 個可租單位的費率至此全部確定，無待確認項。</div>
+
+<h2>4. 後端 API（Apps Script Web App）</h2>
+<div class="scroll"><table>
+<thead><tr><th>呼叫</th><th>參數</th><th>行為</th></tr></thead>
+<tbody>
+<tr><td><code>GET ?action=contract&token=</code></td><td>token</td><td>回合約全部欄位＋條文版本＋設備單價。token 無效或已簽 → 回 <code>{state:"signed"}</code> 供前端切唯讀</td></tr>
+<tr><td><code>POST action=sign</code></td><td>token、equip、簽名 PNG（base64）</td><td>驗 token → 寫 signed_* → 存簽名圖 → 產 PDF → status 改「在住」→ 回 PDF 連結</td></tr>
+<tr><td><code>GET ?action=handover&token=</code></td><td>token</td><td>同上，回點交單內容</td></tr>
+<tr><td><code>POST action=handoverSign</code></td><td>token、七項結果、need_cleaning、簽名</td><td>算賠償總額 → 產點交 PDF → 合約 status 改「已退宿」</td></tr>
+<tr><td><code>POST action=create</code>（管理端）</td><td>合約欄位＋管理密碼</td><td>建單、發 token、回連結。床位重複時回警告，帶 <code>force=1</code> 可強制建立</td></tr>
+<tr><td><code>GET ?action=list</code>（管理端）</td><td>管理密碼</td><td>回全部合約摘要供後台表格</td></tr>
+</tbody></table></div>
+<p>管理端用一組密碼保護（比照 <code>mala-staff-eval</code> 的通行碼做法），密碼存 Script Properties，不寫在前端。</p>
+
+<h2>5. 五條主要流程</h2>
+
+<h3>5.1 建合約單</h3>
+<p>你在 admin 填欄位 → 選房間後床位選單才出現、月租金自動帶入 → 租期起日填了自動算迄日（+6 個月 −1 天）→
+床位若已有「在住」合約，跳警告但允許強制建立（交接期重疊）→ 產生
+<code>https://eason0728.github.io/mala-dorm/sign.html?t=<i>32碼</i></code>，你自己複製傳給同仁。</p>
+
+<h3>5.2 同仁簽合約</h3>
+<p>開連結 → 封面 → 十八條＋附件一（含賠償單價表）＋附件二規約，全部唯讀，只有設備點收可勾 →
+手寫簽名（canvas，可清除重畫；未簽名不能送出）→ 送出 → 後端產 PDF →
+畫面顯示「已完成」並提供下載按鈕（第十六條「各自下載留存」的實作）。</p>
+<div class="note">同一條連結再開一次：顯示唯讀的已簽版本＋下載按鈕，不能再送出。</div>
+
+<h3>5.3 產生 PDF</h3>
+<p>以一份 Google Docs 範本為底，Apps Script 複製範本 → 取代
+<code>{{姓名}} {{房間}} {{租期}}</code> 等佔位符 → 插入手寫簽名圖與大章圖 → 匯出 PDF → 存進雲端硬碟 → 刪掉暫存 Doc。</p>
+<div class="warn"><strong>技術風險（未確認，Phase 0 先驗）：</strong>Apps Script 另一條路是 HTML 直接轉 PDF，
+寫起來比較快，但中文字型在 Google 的轉檔器上有掉字風險。
+所以主方案選 Google Docs 範本（中文穩、封面分頁好控制）。
+<strong>動工第一件事就是花半小時做一個最小驗證</strong>：產一份含中文＋簽名圖＋大章的 PDF，
+確認字沒破、圖有在、封面自己一頁。過了才往下寫。</div>
+
+<h3>5.4 自動續約（第二條）</h3>
+<p>每天 03:00 的時間觸發器掃 <code>status=在住</code> 的合約：</p>
+<ul>
+  <li>距 <code>term_end</code> 剩 30 天 → 後台清單標示，<strong>並寄一封 Email 給
+      <code>madesiaosinla@gmail.com</code></strong>（Eason 2026-07-23 追加）。
+      當天沒有到期在即的合約就不寄；同一筆只寄一次（<code>notified_at</code> 欄防重複）；
+      多筆合併成一封。</li>
+  <li>過了 <code>term_end</code> 且你沒標記「已通知終止」→ <code>term_start/term_end</code> 各推六個月、<code>term_no +1</code>、
+      寫一列 audit_log。<strong>不重簽、不重產 PDF</strong>（條文寫的就是「不另行簽訂契約」）。</li>
+  <li>你若在期滿前標記「已通知終止／換房」→ 到期日轉為 <code>待退宿</code>，可直接開點交單。</li>
+</ul>
+
+<h3>5.5 退宿點交</h3>
+<p>你在後台對該筆按「開點交單」→ 產生第二條連結 → 同仁逐項勾選正常／異常、歸還／未還 →
+勾「需清潔」時加 3,000 → 應賠償金額即時加總顯示 → 手寫簽名送出 →
+產點交 PDF（出租人欄位蓋大章）→ 合約 status 轉「已退宿」，床位釋出。</p>
+
+<h2>6. 安全與存證</h2>
+<ul>
+  <li><strong>token</strong>：<code>Utilities.getUuid()</code> 去掉連字號再串一次，32 字元，猜中機率可忽略。一人一單一碼，簽完即失效。</li>
+  <li><strong>存證三件組</strong>：簽署時間（伺服器時間，不信任前端）、IP、User-Agent，寫進 contracts 與 audit_log 兩處。</li>
+  <li><strong>簽名圖</strong>：PNG 存雲端硬碟，同時嵌進 PDF，兩份互為佐證。</li>
+  <li><strong>條文版本</strong>：每份合約記 <code>terms_ver</code>，日後改條文不影響既簽合約重印時的內容。</li>
+  <li><strong>個資最小化</strong>：只存身分證字號，不上傳影本；試算表與資料夾不開共用連結，只有你的帳號能看。</li>
+  <li><strong>保存年限</strong>：第十八條第四項寫五年，實作上就是不刪雲端硬碟資料夾（不做自動刪除）。</li>
+</ul>
+
+<h2>7. 部署</h2>
+<ul>
+  <li>前端：GitHub Pages 新開一個 repo <code>mala-dorm</code>（或掛在既有 Pages 底下的 <code>/mala-dorm/</code> 路徑）。</li>
+  <li>後端：新的 Apps Script 專案，部署為 Web App（執行身分＝你，存取權＝任何人）。</li>
+  <li>試算表：新開一份「宿舍合約系統」，四個工作表。</li>
+  <li>PDF 落點：你給的雲端硬碟資料夾 <code>193VGXJjRsrrS_jl6MVYzwOtNTTJUVmUO</code>。</li>
+  <li>依鐵律 1：全部先在本機／測試部署跑通給你看，你點頭才推正式。</li>
+</ul>
+
+<h2>8. 明確不做</h2>
+<p>不寄 Email 或 LINE 給<strong>同仁</strong>（同仁簽完當場自己下載；到期提醒只寄給 Eason 一人）、
+不推 LINE、不做在住總表、
+不上傳身分證影本、不接第三方時間戳、不做租金收款、不做同仁自助查歷史合約、
+北極熊費用不進系統（現場收現金）。</p>
+
+<h2>9. 驗收條件</h2>
+<ol>
+  <li>Phase 0 的 PDF 驗證：中文不破字、簽名圖與大章都在、封面獨立一頁。</li>
+  <li>建一筆合約單拿到連結；床位重複時會跳警告。</li>
+  <li>手機開連結：先看到封面，往下是十八條＋兩份附件，iPhone 上不需橫向捲動。</li>
+  <li>未簽名送不出去；簽名可清除重畫。</li>
+  <li>送出後雲端硬碟出現 <code>YYYY-MM-DD_姓名_宿舍合約.pdf</code>，內容與畫面一致。</li>
+  <li>同一連結再開＝唯讀＋可下載，不能重送。</li>
+  <li>試算表三張表都有對應紀錄，audit_log 有時間／IP／UA。</li>
+  <li>把某筆的 term_end 改成昨天、手動跑一次續約函式 → term_no +1、日期推六個月、audit_log 有一列。</li>
+  <li>點交單七項勾選＋需清潔 → 應賠償金額計算正確，PDF 上的數字與畫面一致。</li>
+  <li>點交送出後合約狀態轉「已退宿」，該床位可以建新合約且不再跳重複警告。</li>
+</ol>
+
+<h2>10. 下一步</h2>
+<p>房型費率已補齊，本規格書無待確認項。接著是 plan（開發階段）與 task（可直接動手的小任務清單），
+見 <code>docs/plan.html</code>。</p>
+
+</div>
+</body>
+</html>

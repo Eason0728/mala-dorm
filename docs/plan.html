@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宿舍合約線上簽核系統 plan &amp; task</title>
+<style>
+  :root{
+    --ink:#1c1a19; --muted:#6b635c; --line:#e0d9d2; --bg:#fbf9f7; --card:#fff;
+    --accent:#b3261e; --accent-bg:#fdf3f2; --ok:#2f6b3a; --ok-bg:#f2f7f2; --code:#f0ece8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--ink:#eae5e0;--muted:#a8a099;--line:#3a3532;--bg:#1a1817;--card:#221f1e;
+          --accent:#ef8a80;--accent-bg:#2a1e1d;--ok:#8fce9c;--ok-bg:#1c2620;--code:#2a2624;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang TC","Noto Sans TC","Helvetica Neue",sans-serif;
+    line-height:1.8;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:48px 24px 96px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:32px}
+  h1{font-size:26px;margin:0 0 10px}
+  .meta{color:var(--muted);font-size:13.5px;line-height:1.7}
+  h2{font-size:19px;margin:46px 0 14px;padding-top:20px;border-top:1px solid var(--line)}
+  h2:first-of-type{border-top:none;padding-top:0}
+  h3{font-size:15.5px;margin:24px 0 6px}
+  p,li{font-size:15px}
+  code{background:var(--code);padding:1px 6px;border-radius:3px;font-size:13.5px;
+    font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+  th,td{border-bottom:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{font-weight:600;font-size:12.5px;color:var(--muted);letter-spacing:.04em}
+  .scroll{overflow-x:auto}
+  .warn{background:var(--accent-bg);border-left:3px solid var(--accent);
+    padding:12px 16px;margin:16px 0;font-size:14.5px;border-radius:0 4px 4px 0}
+  .ok{background:var(--ok-bg);border-left:3px solid var(--ok);
+    padding:12px 16px;margin:16px 0;font-size:14.5px;border-radius:0 4px 4px 0}
+  .note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--muted);
+    padding:12px 16px;margin:16px 0;font-size:14.5px;border-radius:0 4px 4px 0}
+  .task{background:var(--card);border:1px solid var(--line);border-radius:7px;
+    padding:16px 18px;margin:14px 0}
+  .task .id{font-size:11.5px;letter-spacing:.08em;color:var(--muted);font-weight:600}
+  .task h4{margin:4px 0 10px;font-size:16px}
+  .task dl{margin:0;font-size:14px}
+  .task dt{font-size:11.5px;letter-spacing:.06em;color:var(--muted);margin-top:9px}
+  .task dd{margin:2px 0 0}
+  .size{float:right;font-size:11.5px;color:var(--muted);font-weight:400}
+  ol,ul{padding-left:22px}
+  li{margin-bottom:5px}
+  .milestone{font-size:14px;color:var(--ok);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>宿舍合約線上簽核系統　開發計畫與任務清單</h1>
+  <div class="meta">
+    draft 1／2026-07-23<br>
+    上游：requirements.md、contract-amendment-draft.html（條文 2.1 定稿）、spec.html<br>
+    專案目錄：<code>~/mala-dorm-contract/</code>
+  </div>
+</header>
+
+<h2>共用契約（動工前先釘死，避免各任務各做各的）</h2>
+<p>以下格式在多個任務裡都會各自產生一次，所以逐字元定義，不用語意描述：</p>
+<div class="scroll"><table>
+<thead><tr><th>名稱</th><th>逐字元格式</th><th>範例</th></tr></thead>
+<tbody>
+<tr><td>合約編號</td><td><code>C-YYYYMMDD-NNN</code>（簽發日、三位補零流水）</td><td><code>C-20260801-001</code></td></tr>
+<tr><td>點交編號</td><td><code>H-YYYYMMDD-NNN</code></td><td><code>H-20270131-001</code></td></tr>
+<tr><td>token</td><td>32 字元 <code>[0-9a-f]</code>，全小寫，無連字號</td><td><code>3f9a…</code>（32 碼）</td></tr>
+<tr><td>合約 PDF 檔名</td><td><code>YYYY-MM-DD_姓名_宿舍合約.pdf</code>（日期＝簽署日）</td><td><code>2026-08-01_王小明_宿舍合約.pdf</code></td></tr>
+<tr><td>點交 PDF 檔名</td><td><code>YYYY-MM-DD_姓名_設備點交.pdf</code></td><td><code>2027-01-31_王小明_設備點交.pdf</code></td></tr>
+<tr><td>房間值</td><td>字串，六選一：<code>二樓單人房</code>｜<code>二樓四人房</code>｜<code>三樓單人房</code>｜<code>三樓1號房</code>｜<code>三樓2號房</code>｜<code>三樓3號房</code>（無空格）</td><td><code>三樓1號房</code></td></tr>
+<tr><td>床位值</td><td>字串，無床位者為空字串：<code>1號床位</code>…<code>4號床位</code>｜<code>雙人床位A</code>｜<code>雙人床位B</code></td><td><code>雙人床位A</code></td></tr>
+<tr><td>租賃範圍顯示字串</td><td><code>{房間} {床位}</code>，中間一個半形空格；無床位時不留尾空格</td><td><code>三樓1號房 雙人床位A</code></td></tr>
+<tr><td>條文版本</td><td><code>YYYY-MM-DD-vN.N</code></td><td><code>2026-07-23-v2.1</code></td></tr>
+<tr><td>Docs 範本佔位符</td><td><code>{{key}}</code>，key 為小寫英數與底線</td><td><code>{{tenant_name}}</code>、<code>{{room_bed}}</code>、<code>{{rent}}</code></td></tr>
+<tr><td>日期在 PDF 上的呈現</td><td>民國式 <code>民國115年8月1日</code>；試算表內一律西元 <code>YYYY-MM-DD</code></td><td>—</td></tr>
+</tbody></table></div>
+
+<h2>開發階段（以先達成里程碑為目標）</h2>
+<div class="scroll"><table>
+<thead><tr><th>Phase</th><th>目標</th><th>里程碑（做到這裡就有東西可看）</th></tr></thead>
+<tbody>
+<tr><td><strong>0</strong></td><td>PDF 可行性驗證</td><td class="milestone">產出一份中文不破字、有簽名圖與大章、封面獨立一頁的 PDF</td></tr>
+<tr><td><strong>1</strong></td><td>資料層與後端骨架</td><td>試算表四張表建好，能用網址建一筆合約單並拿到 token</td></tr>
+<tr><td><strong>2</strong></td><td>簽署頁</td><td class="milestone">手機能開連結、看到封面與全文、簽名送出</td></tr>
+<tr><td><strong>3</strong></td><td>PDF 產生與歸檔</td><td class="milestone">簽完雲端硬碟就多一份正式 PDF</td></tr>
+<tr><td><strong>4</strong></td><td>管理後台</td><td>你自己就能建單、發連結、看狀態</td></tr>
+<tr><td><strong>5</strong></td><td>退宿點交</td><td class="milestone">點交單能算賠償金額並產 PDF</td></tr>
+<tr><td><strong>6</strong></td><td>自動續約＋到期通知</td><td class="milestone">到期前一個月自動寄信提醒你，到期未處理則自動延半年</td></tr>
+<tr><td><strong>7</strong></td><td>驗收與正式部署</td><td>十項驗收條件逐項打勾，你點頭才推正式</td></tr>
+</tbody></table></div>
+
+<div class="warn"><strong>Phase 0 是停損點。</strong>如果 Google Docs 範本這條路產出的中文 PDF 有破字或排版失控，
+第二方案是 HTML→PDF 並自行嵌入中文字型；兩條都不行就要回頭找你討論（例如改成產圖片式 PDF）。
+<strong>沒過 Phase 0 不寫 Phase 3 以後的任何程式碼</strong>，避免整套翻掉。</div>
+
+<h2>任務清單</h2>
+
+<h3>Phase 0</h3>
+<div class="task"><span class="size">約 80 行</span><div class="id">TASK-00</div>
+<h4>PDF 產出最小驗證</h4>
+<dl>
+<dt>輸入</dt><dd>一份手做的 Google Docs 範本（含中文條文一段、<code>{{tenant_name}}</code>、簽名圖佔位、大章圖）、<code>鼎兆元大章.jpg</code>、一張假的簽名 PNG</dd>
+<dt>輸出</dt><dd>Apps Script 函式 <code>spikeMakePdf()</code>，跑完在雲端硬碟產出一份 PDF</dd>
+<dt>驗收</dt><dd>① 中文全部正常顯示不破字 ② 簽名 PNG 與大章圖都在正確位置 ③ 封面自成一頁 ④ 檔名符合共用契約格式</dd>
+</dl></div>
+
+<h3>Phase 1</h3>
+<div class="task"><span class="size">無程式碼</span><div class="id">TASK-01</div>
+<h4>建立試算表四張工作表與設定值</h4>
+<dl>
+<dt>輸入</dt><dd>spec §3 的欄位定義</dd>
+<dt>輸出</dt><dd>「宿舍合約系統」試算表：<code>contracts</code>／<code>handovers</code>／<code>settings</code>／<code>audit_log</code>，settings 填入費率、七項單價、清潔費、出租人資料、資料夾 ID</dd>
+<dt>驗收</dt><dd>四張表欄位名與 spec 逐字相同；settings 的 11 個 key 都有值</dd>
+</dl></div>
+
+<div class="task"><span class="size">約 150 行</span><div class="id">TASK-02</div>
+<h4>後端骨架：token、路由、稽核寫入</h4>
+<dl>
+<dt>輸入</dt><dd>試算表 ID、共用契約的 token 與編號格式</dd>
+<dt>輸出</dt><dd><code>Code.gs</code>：<code>doGet</code>／<code>doPost</code> 路由、<code>genToken()</code>、<code>nextId(prefix)</code>、<code>logAudit(event, id, e)</code>、<code>getSettings()</code></dd>
+<dt>驗收</dt><dd>連續產 100 個 token 無重複且皆 32 碼小寫十六進位；同日建三筆合約編號為 001/002/003；每次呼叫 audit_log 都多一列含 IP 與 UA</dd>
+</dl></div>
+
+<div class="task"><span class="size">約 160 行</span><div class="id">TASK-03</div>
+<h4>建合約單 API：create / list</h4>
+<dl>
+<dt>輸入</dt><dd>合約欄位 JSON、管理密碼（Script Properties）</dd>
+<dt>輸出</dt><dd><code>createContract()</code>（含房型→租金對照、租期迄日自動＋6 月−1 天、床位占用檢查、<code>force</code> 旗標）、<code>listContracts()</code></dd>
+<dt>驗收</dt><dd>建單回傳合約編號＋簽署網址；同床位已有「在住」合約時回 <code>{warn:"床位重複"}</code>，帶 force 才建立；密碼錯回 401；六種房間各建一筆，租金分別為 3500/1500/3500/2000/3500/2000</dd>
+</dl></div>
+
+<h3>Phase 2</h3>
+<div class="task"><span class="size">約 200 行</span><div class="id">TASK-04</div>
+<h4>合約條文內容檔（條文 2.1 定稿的機器可讀版）</h4>
+<dl>
+<dt>輸入</dt><dd><code>contract-amendment-draft.html</code> 定稿內容＋原合約未修訂條文</dd>
+<dt>輸出</dt><dd><code>terms/2026-07-23-v2.1.html</code>：十八條全文＋附件一設備表＋附件二規約，內含 <code>{{佔位符}}</code>；供簽署頁與 Docs 範本共用同一份文字來源</dd>
+<dt>驗收</dt><dd>逐條比對定稿無漏字；佔位符命名與共用契約表一致；A～K 十一處修訂全部反映在內</dd>
+</dl></div>
+
+<div class="task"><span class="size">約 190 行</span><div class="id">TASK-05</div>
+<h4>簽署頁 sign.html：封面＋全文渲染</h4>
+<dl>
+<dt>輸入</dt><dd><code>?t=token</code>、<code>GET action=contract</code> 回傳的 JSON、TASK-04 的條文檔</dd>
+<dt>輸出</dt><dd>手機優先的簽署頁：一屏封面 → 十八條 → 附件一（含單價表）→ 附件二規約，欄位以實際值填入且唯讀</dd>
+<dt>驗收</dt><dd>iPhone 寬度不需橫向捲動；租賃範圍顯示為<code>三樓1號房 雙人床位A</code>；租金與押金與後台建單一致；token 無效顯示明確錯誤而非空白頁</dd>
+</dl></div>
+
+<div class="task"><span class="size">約 170 行</span><div class="id">TASK-06</div>
+<h4>設備點收 ＋ 手寫簽名 ＋ 送出</h4>
+<dl>
+<dt>輸入</dt><dd>七項設備清單、canvas 簽名</dd>
+<dt>輸出</dt><dd>點收勾選區、canvas 簽名板（可清除重畫、支援觸控）、送出 <code>POST action=sign</code>（簽名轉 base64 PNG）、完成畫面＋下載按鈕</dd>
+<dt>驗收</dt><dd>未簽名時送出鈕不可按；清除後可重畫；送出後畫面顯示完成並可下載；同一連結再開為唯讀</dd>
+</dl></div>
+
+<h3>Phase 3</h3>
+<div class="task"><span class="size">約 180 行</span><div class="id">TASK-07</div>
+<h4>合約 PDF 產生與歸檔</h4>
+<dl>
+<dt>輸入</dt><dd>TASK-00 驗證過的做法、Docs 範本、合約列資料、簽名 PNG</dd>
+<dt>輸出</dt><dd><code>buildContractPdf(contractId)</code>：複製範本→取代佔位符→插簽名與大章→匯出 PDF→存指定資料夾→回寫 <code>pdf_id</code>→刪暫存 Doc</dd>
+<dt>驗收</dt><dd>檔名符合共用契約；PDF 內容與簽署頁畫面逐欄一致；封面獨立一頁；重跑同一份不會產生重複檔（覆蓋或帶版次）</dd>
+</dl></div>
+
+<h3>Phase 4</h3>
+<div class="task"><span class="size">約 200 行</span><div class="id">TASK-08</div>
+<h4>管理後台 admin.html</h4>
+<dl>
+<dt>輸入</dt><dd><code>list</code>／<code>create</code> API、管理密碼</dd>
+<dt>輸出</dt><dd>建單表單（房間→床位連動、租金自動帶入、租期自動算）＋合約一覽表（狀態、期別、到期日、PDF 連結、複製連結鈕、開點交單鈕、標記已通知終止鈕）</dd>
+<dt>驗收</dt><dd>密碼錯進不去；建單後清單即時出現；複製連結可直接貼給同仁；床位重複跳確認框</dd>
+</dl></div>
+
+<h3>Phase 5</h3>
+<div class="task"><span class="size">約 180 行</span><div class="id">TASK-09</div>
+<h4>退宿點交頁 handover.html ＋ 賠償計算</h4>
+<dl>
+<dt>輸入</dt><dd>點交 token、settings 的七項單價與清潔費</dd>
+<dt>輸出</dt><dd>七項逐項「正常／異常＋說明」「歸還／未還」、需清潔勾選（＋3,000）、應賠償金額即時加總、手寫簽名、送出</dd>
+<dt>驗收</dt><dd>全部正常且歸還時合計為 0；床墊未還＋需清潔＝6,500；畫面數字與後端重算結果一致（後端不信任前端傳來的總額）</dd>
+</dl></div>
+
+<div class="task"><span class="size">約 140 行</span><div class="id">TASK-10</div>
+<h4>點交 PDF 與狀態轉換</h4>
+<dl>
+<dt>輸入</dt><dd>點交列資料、承租人簽名、大章</dd>
+<dt>輸出</dt><dd><code>buildHandoverPdf()</code>、合約 status 轉「已退宿」、床位釋出</dd>
+<dt>驗收</dt><dd>PDF 上七項結果與金額與畫面一致；該床位可建新合約且不再跳重複警告</dd>
+</dl></div>
+
+<h3>Phase 6</h3>
+<div class="task"><span class="size">約 120 行</span><div class="id">TASK-11</div>
+<h4>自動續約觸發器</h4>
+<dl>
+<dt>輸入</dt><dd><code>term_end</code>、<code>renew.notice_days</code>=30、後台「已通知終止」旗標</dd>
+<dt>輸出</dt><dd>每日 03:00 觸發器：到期前 30 天標示提醒；到期未標記終止則推六個月、<code>term_no+1</code>、寫 audit_log；已標記終止者轉「待退宿」</dd>
+<dt>驗收</dt><dd>把某筆 term_end 改成昨天手動執行 → 期別 +1、起訖各推六個月、audit_log 多一列；已標記終止者不續約而轉待退宿</dd>
+</dl></div>
+
+<div class="task"><span class="size">約 70 行</span><div class="id">TASK-13</div>
+<h4>到期前 Email 通知</h4>
+<dl>
+<dt>輸入</dt><dd>每日 03:00 觸發器掃出的「30 天內到期且尚未標記終止」清單、<code>settings.notify.email</code> = <code>madesiaosinla@gmail.com</code></dd>
+<dt>輸出</dt><dd><code>MailApp</code> 寄一封彙整信：每筆一行「姓名（房間 床位）本期 YYYY-MM-DD 期滿，未於 YYYY-MM-DD 前標記終止即自動續半年」＋後台連結。合約列加一個 <code>notified_at</code> 欄防重複寄。</dd>
+<dt>驗收</dt><dd>① 當天沒有到期在即的合約時<strong>完全不寄信</strong> ② 同一筆只寄一次（<code>notified_at</code> 有值就跳過）③ 兩筆同時到期時合併成一封而非兩封 ④ 信件主旨含件數，例「宿舍合約：2 筆將於 30 天內期滿」</dd>
+</dl></div>
+
+<h3>Phase 7</h3>
+<div class="task"><span class="size">—</span><div class="id">TASK-12</div>
+<h4>整體驗收與部署</h4>
+<dl>
+<dt>輸入</dt><dd>spec §9 的十項驗收條件</dd>
+<dt>輸出</dt><dd>逐項打勾的驗收報告（每項附實際跑過的指令或畫面）＋測試部署網址</dd>
+<dt>驗收</dt><dd>十項全綠；<strong>你看過測試版點頭後才推正式</strong>（鐵律 1）</dd>
+</dl></div>
+
+<h2>執行方式</h2>
+<ul>
+  <li>一次做一個 Phase，每個 Phase 做完給你看得到的東西（里程碑那欄），不要等全做完才給你。</li>
+  <li>TASK-04 的條文檔是簽署頁與 PDF 範本的<strong>同一份文字來源</strong>——兩邊各打一次字必然會不一致，這是最容易出的錯。</li>
+  <li>金額一律以後端 settings 為準重算，前端算的只是給人看的即時數字。</li>
+  <li>部署類動作全部先本機／測試環境跑通、問過你才推正式。</li>
+</ul>
+
+<h2>下一步</h2>
+<p>你過目這份計畫，沒問題我就從 <strong>TASK-00（PDF 最小驗證）</strong> 開始——
+這一步是停損點，過了才有底氣往下寫。</p>
+
+</div>
+</body>
+</html>

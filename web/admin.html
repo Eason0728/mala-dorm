@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宿舍合約系統　管理後台</title>
+<style>
+  :root{
+    --ink:#1c1a19; --muted:#6f665f; --line:#e2dbd4; --bg:#f7f4f1; --card:#fff;
+    --brand:#c8402c; --ok:#2f6b3a; --warn-bg:#fff8e6; --warn-fg:#7a6320;
+    --shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang TC","Noto Sans TC","Helvetica Neue",sans-serif;
+    line-height:1.7;font-size:15px}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 80px}
+  header{display:flex;align-items:baseline;gap:14px;margin-bottom:22px}
+  h1{font-size:21px;margin:0}
+  .sub{font-size:12.5px;color:var(--muted)}
+  h2{font-size:16px;margin:0 0 12px}
+  section{background:var(--card);border-radius:10px;padding:20px 22px;
+    margin-bottom:18px;box-shadow:var(--shadow)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+  input,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;
+    font-size:14.5px;font-family:inherit;background:var(--bg)}
+  input:focus,select:focus{outline:2px solid var(--brand);outline-offset:-1px}
+  .row3{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+
+  button{border:none;border-radius:8px;padding:11px 20px;font-size:14.5px;
+    font-weight:600;cursor:pointer;font-family:inherit}
+  .primary{background:var(--brand);color:#fff}
+  .ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .actions{margin-top:16px;display:flex;gap:10px;align-items:center}
+  .msg{font-size:13.5px}
+  .msg.ok{color:var(--ok)} .msg.err{color:var(--brand)}
+
+  .result{background:#f2f7f2;border:1px solid #cfe3cf;border-radius:8px;
+    padding:14px 16px;margin-top:14px;font-size:14px;display:none}
+  .result code{background:#fff;padding:4px 8px;border-radius:5px;font-size:12.5px;
+    word-break:break-all;display:block;margin:8px 0}
+
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;white-space:nowrap}
+  th{font-size:11.5px;color:var(--muted);font-weight:600}
+  .scroll{overflow-x:auto}
+  .st{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px}
+  .st.待簽{background:var(--warn-bg);color:var(--warn-fg)}
+  .st.在住{background:#f2f7f2;color:var(--ok)}
+  .st.已退宿{background:#eee;color:#777}
+  .due{color:var(--brand);font-weight:600}
+  td .mini{font-size:12px;padding:5px 10px;margin-right:4px}
+  #login{max-width:360px;margin:80px auto}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <section id="login">
+    <h2>宿舍合約系統　管理後台</h2>
+    <label>管理通行碼</label>
+    <input type="password" id="pass" autocomplete="current-password">
+    <div class="actions">
+      <button class="primary" id="loginBtn">進入</button>
+      <span class="msg err" id="loginMsg"></span>
+    </div>
+  </section>
+
+  <div id="main" style="display:none">
+    <header>
+      <h1>宿舍合約　管理後台</h1>
+      <span class="sub">新竹市光復路一段435號</span>
+    </header>
+
+    <section>
+      <h2>建立合約單</h2>
+      <div class="grid">
+        <div><label>承租人姓名 *</label><input id="f_name"></div>
+        <div><label>身分證字號 *</label><input id="f_id_no" autocapitalize="characters"></div>
+        <div><label>聯絡電話 *</label><input id="f_phone" inputmode="tel"></div>
+        <div><label>通訊地址</label><input id="f_mail_addr"></div>
+        <div><label>房間 *</label><select id="f_room"></select></div>
+        <div id="bedWrap" style="display:none"><label>床位 *</label><select id="f_bed"></select></div>
+        <div><label>月租金（自動）</label><input id="f_rent" readonly></div>
+        <div><label>租期起日 *</label><input type="date" id="f_start"></div>
+        <div><label>租期迄日（自動 +6 個月）</label><input id="f_end" readonly></div>
+        <div class="row3">
+          <div><label>管理費</label><select id="f_mgmt"><option>由出租人負擔</option><option>由承租人負擔</option></select></div>
+          <div><label>水費</label><select id="f_water"><option>由出租人負擔</option><option>由承租人負擔</option></select></div>
+          <div><label>電費</label><select id="f_power"><option>由出租人負擔</option><option>由承租人負擔</option></select></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="createBtn">建立並產生簽署連結</button>
+        <span class="msg" id="createMsg"></span>
+      </div>
+      <div class="result" id="createResult"></div>
+    </section>
+
+    <section>
+      <h2>合約一覽 <button class="ghost" id="reload" style="float:right;padding:6px 14px;font-size:13px">重新整理</button></h2>
+      <div class="scroll"><table id="list">
+        <thead><tr><th>編號</th><th>姓名</th><th>房間/床位</th><th>租金</th>
+        <th>本期</th><th>期別</th><th>狀態</th><th>簽署</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbyxyhJ35MWTjtvzKr54_9JzGfLZlclyqn2fYLWXgz0muTFzL_tu81nR1r3W332J1igm/exec';
+let PASS = sessionStorage.getItem('dorm_pass') || '';
+let ROOMS = [];
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+async function api(params, post) {
+  const url = post ? API_URL : API_URL + '?' + new URLSearchParams(params);
+  const r = await fetch(url, post ? {method:'POST', body: JSON.stringify(params)} : {});
+  return r.json();
+}
+
+// ── 登入 ─────────────────────────────
+$('loginBtn').onclick = async () => {
+  PASS = $('pass').value.trim();
+  $('loginMsg').textContent = '確認中…';
+  const j = await api({action:'list', pass:PASS});
+  if (!j.ok) { $('loginMsg').textContent = j.error || '通行碼錯誤'; return; }
+  sessionStorage.setItem('dorm_pass', PASS);
+  enter(j.contracts);
+};
+$('pass').addEventListener('keydown', e => { if (e.key==='Enter') $('loginBtn').click(); });
+
+async function enter(contracts) {
+  $('login').style.display = 'none';
+  $('main').style.display = '';
+  const j = await api({action:'rooms'});
+  ROOMS = j.rooms;
+  $('f_room').innerHTML = '<option value="">請選擇</option>' +
+    ROOMS.map(r=>`<option>${esc(r.room)}</option>`).join('');
+  renderList(contracts || []);
+  if (!contracts) refresh();
+}
+
+// ── 建單表單連動 ──────────────────────
+$('f_room').onchange = () => {
+  const def = ROOMS.find(r=>r.room===$('f_room').value);
+  if (!def) { $('bedWrap').style.display='none'; $('f_rent').value=''; return; }
+  if (def.beds.length) {
+    $('bedWrap').style.display='';
+    $('f_bed').innerHTML = def.beds.map(b=>`<option>${esc(b)}</option>`).join('');
+  } else $('bedWrap').style.display='none';
+  const rate = {單人房:3500, 雙人房:2000, 四人房:1500}[def.type];
+  $('f_rent').value = rate ? rate.toLocaleString() + ' 元' : '';
+};
+$('f_start').onchange = () => {
+  const v = $('f_start').value; if (!v) return;
+  const d = new Date(v); d.setMonth(d.getMonth()+6); d.setDate(d.getDate()-1);
+  $('f_end').value = d.toISOString().slice(0,10);
+};
+
+// ── 建立 ─────────────────────────────
+$('createBtn').onclick = () => createContract(false);
+async function createContract(force) {
+  const p = {
+    action:'create', pass:PASS, force: force?1:'',
+    name:$('f_name').value.trim(), id_no:$('f_id_no').value.trim().toUpperCase(),
+    phone:$('f_phone').value.trim(), mail_addr:$('f_mail_addr').value.trim(),
+    room:$('f_room').value, bed: $('bedWrap').style.display==='none' ? '' : $('f_bed').value,
+    term_start:$('f_start').value,
+    fee_mgmt:$('f_mgmt').value, fee_water:$('f_water').value, fee_power:$('f_power').value,
+  };
+  for (const [k,lab] of [['name','姓名'],['id_no','身分證字號'],['phone','電話'],['room','房間'],['term_start','租期起日']])
+    if (!p[k]) { $('createMsg').className='msg err'; $('createMsg').textContent='請填'+lab; return; }
+
+  $('createBtn').disabled = true;
+  $('createMsg').className='msg'; $('createMsg').textContent='建立中…';
+  const j = await api(p, true);
+  $('createBtn').disabled = false;
+
+  if (j.warn === '床位重複') {
+    if (confirm(j.message + '\n\n（交接期短暫重疊可按確定強制建立）')) return createContract(true);
+    $('createMsg').textContent=''; return;
+  }
+  if (!j.ok) { $('createMsg').className='msg err'; $('createMsg').textContent=j.error; return; }
+
+  $('createMsg').className='msg ok'; $('createMsg').textContent='已建立 '+j.contract_id;
+  const url = location.origin + location.pathname.replace(/admin\.html$/,'') + 'sign.html?t=' + j.token;
+  $('createResult').style.display='block';
+  $('createResult').innerHTML = `
+    <strong>${esc($('f_name').value)}</strong>　${esc(p.room)} ${esc(p.bed)}　租金 ${j.rent.toLocaleString()} 元／月
+    <br>租期 ${j.term_start} ～ ${j.term_end}
+    <code id="signUrl">${esc(url)}</code>
+    <button class="ghost" onclick="navigator.clipboard.writeText(document.getElementById('signUrl').textContent).then(()=>this.textContent='已複製 ✓')">複製簽署連結</button>
+    <span style="font-size:12.5px;color:var(--muted)">　把連結傳給同仁（LINE 或簡訊皆可），開啟即可簽署。</span>`;
+  refresh();
+}
+
+// ── 一覽表 ────────────────────────────
+$('reload').onclick = () => refresh();
+async function refresh() {
+  const j = await api({action:'list', pass:PASS});
+  if (j.ok) renderList(j.contracts);
+}
+function renderList(list) {
+  const tb = $('list').querySelector('tbody');
+  const today = new Date(); const soon = new Date(); soon.setDate(soon.getDate()+30);
+  tb.innerHTML = list.slice().reverse().map(c => {
+    const end = new Date(c.term_end);
+    const dueSoon = c.status==='在住' && end <= soon;
+    const url = location.origin + location.pathname.replace(/admin\.html$/,'') + 'sign.html?t=' + c.token;
+    return `<tr>
+      <td>${esc(c.contract_id)}</td><td>${esc(c.name)}</td>
+      <td>${esc(c.room)} ${esc(c.bed||'')}</td>
+      <td>${Number(c.rent).toLocaleString()}</td>
+      <td class="${dueSoon?'due':''}">${esc(c.term_start)}<br>～${esc(c.term_end)}${dueSoon?'（30日內到期）':''}</td>
+      <td>第 ${esc(c.term_no)} 期</td>
+      <td><span class="st ${esc(c.status)}">${esc(c.status)}</span></td>
+      <td>${esc((c.signed_at||'').slice(0,10))}</td>
+      <td>
+        ${c.status==='待簽' ? `<button class="ghost mini" onclick="navigator.clipboard.writeText('${url}').then(()=>event.target.textContent='已複製')">複製連結</button>` : ''}
+        ${c.pdf_id ? `<a class="ghost mini" style="text-decoration:none;padding:5px 10px;border:1px solid var(--line);border-radius:8px" target="_blank" href="https://drive.google.com/file/d/${esc(c.pdf_id)}/view">PDF</a>` : ''}
+      </td></tr>`;
+  }).join('');
+}
+
+// 已登入過就直接進
+if (PASS) (async()=>{ const j=await api({action:'list',pass:PASS}); if(j.ok) enter(j.contracts); else sessionStorage.removeItem('dorm_pass'); })();
+</script>
+</body>
+</html>
