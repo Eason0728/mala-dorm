@@ -73,3 +73,17 @@ function cleanupE2E() {
     .forEach(function (r) { shC.deleteRow(r); });
   Logger.log('清掉 ' + cs.length + ' 筆合約、相關點交單、' + files + ' 個檔案（丟垃圾桶）');
 }
+
+/** ⚠️ 危險：清空全部合約與點交資料（含簽名圖與 PDF）。只在確認全是測試資料時用。 */
+function wipeAllData() {
+  let files = 0;
+  const trash = function (id) { if (id) try { DriveApp.getFileById(id).setTrashed(true); files++; } catch (e) {} };
+  readSheet('contracts').forEach(function (r) { trash(r.sign_img_id); trash(r.pdf_id); });
+  readSheet('handovers').forEach(function (r) { trash(r.sign_img_id); trash(r.pdf_id); });
+  ['contracts', 'handovers'].forEach(function (name) {
+    const sh = getSheet(name);
+    if (sh.getLastRow() > 1) sh.deleteRows(2, sh.getLastRow() - 1);
+  });
+  logAudit('wipe_all', '', null, files + ' 個檔案');
+  Logger.log('已清空 contracts／handovers，' + files + ' 個檔案丟垃圾桶');
+}

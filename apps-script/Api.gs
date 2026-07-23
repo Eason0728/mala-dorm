@@ -65,6 +65,11 @@ function doPost(e) {
         requireAdmin(p);
         cleanupE2E();
         return jsonOut({ ok: true });
+      case 'wipeAll':
+        requireAdmin(p);
+        if (p.confirm !== 'WIPE') throw new Error('需帶 confirm=WIPE');
+        wipeAllData();
+        return jsonOut({ ok: true });
       default:
         return jsonOut({ ok: false, error: '未知的 action：' + p.action });
     }

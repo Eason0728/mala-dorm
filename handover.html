@@ -104,7 +104,7 @@ function render() {
     原租期 ${esc(h.term_start)} ～ ${esc(h.term_end)}</div>
   </div>
   <section>
-    <p class="hint">請與宿舍長一起逐項確認設備狀態。異常或未歸還的項目，依簽約時的賠償單價計算。</p>
+    <p class="hint">請與宿舍長一起逐項確認。設備完好歸還即不需賠償；異常且未歸還者依簽約時的賠償單價計算。</p>
     ${D.equip.map((x,i)=>`
     <div class="item" id="it${i}">
       <div class="head"><span class="name">${esc(x.item)}</span>
@@ -148,6 +148,14 @@ function render() {
         seg.querySelectorAll('button').forEach(b => b.className='');
         btn.className = v ? 'on-ok' : 'on-bad';
         if (k==='normal') document.getElementById('note'+i).style.display = v ? 'none' : 'block';
+        // 選「未歸還」時自動視為異常（沒歸還的東西無從點收為正常）
+        if (k==='returned' && v===false && state[i].normal !== false) {
+          state[i].normal = false;
+          const nseg = document.querySelector(`.seg[data-k="normal"][data-i="${i}"]`);
+          nseg.querySelectorAll('button').forEach(b => b.className='');
+          nseg.querySelector('button[data-v="0"]').className = 'on-bad';
+          document.getElementById('note'+i).style.display = 'block';
+        }
         update();
       };
     });
@@ -188,7 +196,7 @@ function update() {
   D.equip.forEach((x,i)=>{
     const st = state[i]||{};
     if (st.normal!==undefined && st.returned!==undefined) doneCount++;
-    if (st.normal===false || st.returned===false) total += x.price;
+    if (st.normal===false && st.returned===false) total += x.price;  // 已歸還＝0；異常＋未歸還才計價
   });
   if (cleanOn) total += D.cleaning_fee;
   const t = document.getElementById('total');

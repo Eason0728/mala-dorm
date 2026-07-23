@@ -167,7 +167,7 @@ function buildPlaceholders(c) {
     lessor_taxid: String(s['lessor.taxid'] || ''),
     lessor_addr: String(s['lessor.addr'] || ''),
     lessor_phone: String(s['lessor.phone'] || ''),
-    sign_date_roc: c.signed_at ? fmtRoc(String(c.signed_at).slice(0, 10)) : fmtRoc(new Date()),
+    sign_date_roc: fmtRoc(c.signed_at || new Date()),  // 直接餵 Date 物件；String().slice 會產生 'Thu Jul 23' → 被解析成 2001 年（民國90）
   };
 }
 

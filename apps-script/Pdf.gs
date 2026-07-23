@@ -64,9 +64,16 @@ function buildContractPdf(contractId) {
   // ── 附件一 ─────────────────────────────
   body.appendPageBreak();
   p(t.annex1.title, { bold: true, size: 13, before: 0, after: 6 });
-  const rows = [['設備項目', '數量', '賠償單價', '是否正常', '是否歸還']];
+  // 簽約當下的點收狀態：有提供→正常／未歸還；同仁點收時取消勾選的→未提供
+  let provided = {};
+  try { JSON.parse(c.equip_json || '[]').forEach(function (x) { provided[x.item] = !!x.ok; }); } catch (err) {}
+  const hasEquipData = Object.keys(provided).length > 0;
+  const rows = [['設備項目', '數量', '賠償單價', '狀態', '是否歸還']];
   t.annex1.prices.forEach(function (x) {
-    rows.push([x.item, String(x.qty), x.price.toLocaleString(), '□正常　□異常', '□是　□否']);
+    const has = hasEquipData ? provided[x.item] : true;
+    rows.push(has
+      ? [x.item, String(x.qty), x.price.toLocaleString(), '正常（已點收）', '未歸還']
+      : [x.item, '—', '—', '未提供', '—']);
   });
   const table = body.appendTable(rows);
   table.setBorderWidth(0.5);
@@ -124,7 +131,7 @@ function buildContractPdf(contractId) {
 
   // ── 匯出、歸檔 ─────────────────────────
   const docFile = DriveApp.getFileById(doc.getId());
-  const dateStr = String(c.signed_at || nowStr()).slice(0, 10);
+  const dateStr = fmtDate(c.signed_at || new Date());
   const name = dateStr + '_' + c.name + '_宿舍合約.pdf';
   const blob = docFile.getAs('application/pdf').setName(name);
   const folder = DriveApp.getFolderById(String(s['drive.folder_id']));

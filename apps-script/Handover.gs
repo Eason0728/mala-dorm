@@ -55,9 +55,18 @@ function getHandoverByToken(token, e) {
       items: h.items_json ? JSON.parse(h.items_json) : null,
       compensation_total: h.compensation_total,
     },
-    equip: EQUIP_ITEMS.map(function (k) {
-      return { item: k, price: Number(s['price.' + k] || 0) };
-    }),
+    equip: (function () {
+      // 只列簽約時點收「有提供」的設備；舊資料沒有 equip_json 就全列
+      let provided = null;
+      try {
+        const ej = JSON.parse(c.equip_json || '[]');
+        if (ej.length) provided = {};
+        ej.forEach(function (x) { provided[x.item] = !!x.ok; });
+      } catch (err) {}
+      return EQUIP_ITEMS
+        .filter(function (k) { return !provided || provided[k]; })
+        .map(function (k) { return { item: k, price: Number(s['price.' + k] || 0) }; });
+    })(),
     cleaning_fee: Number(s['fee.cleaning'] || 3000),
   };
 }
@@ -69,7 +78,8 @@ function calcCompensation(items, needCleaning) {
   const lines = [];
   items.forEach(function (it) {
     const price = Number(s['price.' + it.item] || 0);
-    const bad = it.normal === false || it.returned === false;
+    // Eason 2026-07-24：已歸還＝0；只有「異常＋未歸還」才計賠償
+    const bad = it.normal === false && it.returned === false;
     if (bad) { total += price; lines.push(it.item + '：' + price); }
   });
   if (needCleaning) {
@@ -90,7 +100,10 @@ function submitHandover(p, e) {
     if (!p.sign_png) throw new Error('缺少簽名');
 
     const items = p.items || [];
-    if (items.length !== EQUIP_ITEMS.length) throw new Error('設備清單不完整');
+    if (!items.length) throw new Error('設備清單不完整');
+    items.forEach(function (it) {
+      if (EQUIP_ITEMS.indexOf(it.item) < 0) throw new Error('未知設備：' + it.item);
+    });
 
     const comp = calcCompensation(items, !!p.need_cleaning);
 
@@ -131,28 +144,29 @@ function buildHandoverPdf(handoverId) {
   const doc = DocumentApp.create('__tmp_' + handoverId);
   const body = doc.getBody();
   body.clear();
-  body.setMarginTop(54).setMarginBottom(54).setMarginLeft(62).setMarginRight(62);
+  // 一頁式版面（Eason 2026-07-24）：邊界、字級、圖片全部縮小
+  body.setMarginTop(34).setMarginBottom(30).setMarginLeft(52).setMarginRight(52);
   const FONT = 'Noto Sans TC';
   const p = function (text, opt) {
     const o = opt || {};
     const el = body.appendParagraph(text || '');
-    el.setFontFamily(FONT).setFontSize(o.size || 10.5).setBold(!!o.bold)
-      .setLineSpacing(1.35).setSpacingBefore(o.before === undefined ? 4 : o.before);
+    el.setFontFamily(FONT).setFontSize(o.size || 9.5).setBold(!!o.bold)
+      .setLineSpacing(1.15).setSpacingBefore(o.before === undefined ? 2 : o.before);
     if (o.center) el.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
     if (o.color) el.setForegroundColor(o.color);
     return el;
   };
 
-  const logos = p('', { center: true, before: 8 });
+  const logos = p('', { center: true, before: 0 });
   logos.appendInlineImage(Utilities.newBlob(Utilities.base64Decode(LOGO_MALA_B64), 'image/jpeg'))
-       .setWidth(54).setHeight(54);
+       .setWidth(38).setHeight(38);
   logos.appendText('　');
   logos.appendInlineImage(Utilities.newBlob(Utilities.base64Decode(LOGO_MOZHU_B64), 'image/jpeg'))
-       .setWidth(54).setHeight(51);
-  p('承租人歸還設備範圍明細表', { center: true, size: 19, bold: true, before: 10 });
-  p('承租人：' + c.name + '　　房間／床位：' + (c.room + ' ' + (c.bed || '')).trim(), { center: true, size: 11, before: 10 });
+       .setWidth(38).setHeight(36);
+  p('承租人歸還設備範圍明細表', { center: true, size: 15, bold: true, before: 4 });
+  p('承租人：' + c.name + '　　房間／床位：' + (c.room + ' ' + (c.bed || '')).trim(), { center: true, size: 10, before: 4 });
   p('原租賃期間：' + fmtRoc(c.term_start) + ' 至 ' + fmtRoc(c.term_end)
-    + '　　點交日期：' + fmtRoc(String(h.signed_at || nowStr()).slice(0, 10)), { center: true, size: 10 });
+    + '　　點交日期：' + fmtRoc(h.signed_at || new Date()), { center: true, size: 9 });
 
   const rows = [['設備項目', '賠償單價', '狀態', '是否歸還', '說明']];
   items.forEach(function (it) {
@@ -169,7 +183,7 @@ function buildHandoverPdf(handoverId) {
   for (let r = 0; r < rows.length; r++) {
     for (let col = 0; col < rows[r].length; col++) {
       const cell = table.getCell(r, col);
-      cell.setFontFamily(FONT).setFontSize(9.5).setBold(r === 0);
+      cell.setFontFamily(FONT).setFontSize(8.5).setBold(r === 0);
       if (r === 0) cell.setBackgroundColor('#f0ece8');
       if (r > 0 && (rows[r][2] === '異常' || rows[r][3] === '未歸還'))
         cell.setForegroundColor('#b3261e');
@@ -178,24 +192,27 @@ function buildHandoverPdf(handoverId) {
 
   p('房間復原狀況：' + (String(h.need_cleaning) === 'TRUE'
       ? '未回復原狀或留有私人物品，收取清潔費 ' + Number(s['fee.cleaning'] || 3000).toLocaleString() + ' 元'
-      : '已回復原狀，無遺留物'), { before: 10 });
+      : '已回復原狀，無遺留物'), { before: 5 });
   p('應賠償金額合計：新臺幣 ' + Number(h.compensation_total || 0).toLocaleString() + ' 元整',
-    { bold: true, size: 12, before: 6 });
+    { bold: true, size: 11, before: 3 });
   p('上列金額依宿舍租賃契約第三條第二項約定辦理：經承租人書面確認金額無誤後，得自當期薪資代扣，或由承租人另行以現金、轉帳方式支付。',
-    { size: 9, color: '#666666' });
+    { size: 8, color: '#666666' });
 
-  p('承租人（電子簽名）：', { before: 18 });
+  // 簽名與大章並排一列表格，省直向空間
+  const st2 = body.appendTable([['承租人（電子簽名）', '出租人：' + String(s['lessor.name'] || '')]]);
+  st2.setBorderWidth(0);
+  st2.getCell(0, 0).setFontFamily(FONT).setFontSize(9);
+  st2.getCell(0, 1).setFontFamily(FONT).setFontSize(9);
   if (h.sign_img_id) {
-    const sp = p('', { before: 2 });
-    sp.appendInlineImage(DriveApp.getFileById(h.sign_img_id).getBlob()).setWidth(180).setHeight(66);
+    st2.getCell(0, 0).getChild(0).asParagraph().appendText('\n');
+    st2.getCell(0, 0).appendParagraph('').appendInlineImage(
+      DriveApp.getFileById(h.sign_img_id).getBlob()).setWidth(140).setHeight(51);
   }
-  p('出租人：' + String(s['lessor.name'] || ''), { before: 8 });
-  const sealP = p('', { before: 2 });
-  sealP.appendInlineImage(Utilities.newBlob(Utilities.base64Decode(SEAL_B64), 'image/jpeg'))
-       .setWidth(76).setHeight(76);
+  st2.getCell(0, 1).appendParagraph('').appendInlineImage(
+    Utilities.newBlob(Utilities.base64Decode(SEAL_B64), 'image/jpeg')).setWidth(58).setHeight(58);
 
   p('簽署系統紀錄：' + fmtDateTime(h.signed_at) + '　裝置 ' + String(h.signed_ua || '').slice(0, 60)
-    + '　單號 ' + h.handover_id, { size: 7.5, color: '#8a8a8a', before: 12 });
+    + '　單號 ' + h.handover_id, { size: 7, color: '#8a8a8a', before: 4 });
 
   doc.saveAndClose();
   const docFile = DriveApp.getFileById(doc.getId());
