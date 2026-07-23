@@ -234,12 +234,14 @@ function renderList(list) {
 
 async function openHandover(cid, btn) {
   btn.disabled = true; btn.textContent = '建立中…';
+  // 先同步開空白分頁，等 API 回來再導向——晚點才 window.open 會被瀏覽器擋彈窗
+  const tab = window.open('about:blank', '_blank');
   const j = await api({action:'handoverCreate', pass:PASS, contract_id:cid}, true);
   btn.disabled = false;
-  if (!j.ok) { alert(j.error); btn.textContent='開點交單'; return; }
-  await navigator.clipboard.writeText(j.url);
-  btn.textContent = '已複製點交連結';
-  alert((j.reused?'這筆已有未完成的點交單，':'點交單已建立，')+'連結已複製：\n'+j.url);
+  if (!j.ok) { if (tab) tab.close(); alert(j.error); btn.textContent='開點交單'; return; }
+  try { await navigator.clipboard.writeText(j.url); } catch (e) {}
+  if (tab) tab.location = j.url; else window.open(j.url, '_blank');
+  btn.textContent = '點交單已開啟';
 }
 
 async function toggleTerminate(cid, btn) {
