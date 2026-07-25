@@ -61,6 +61,9 @@ function doPost(e) {
         return jsonOut(submitHandover(p, e));
       case 'terminate':
         return jsonOut(markTerminate(p, e));
+      case 'delete':
+        requireAdmin(p);
+        return jsonOut(deleteContract(p, e));
       case 'cleanupTest':
         requireAdmin(p);
         cleanupE2E();
@@ -215,6 +218,27 @@ function testCreateThree() {
   Logger.log('② 第二筆：' + r2.contract_id + '　租金 ' + r2.rent);
   Logger.log('③ 第三筆（同床位）：' + JSON.stringify(r3));
   Logger.log('　 → 第三筆應該回 warn:床位重複，而不是建立成功');
+}
+
+/**
+ * 刪除單一合約——僅限「待簽」（建錯單、還沒簽的）。
+ * 已簽合約（在住／已退宿）一律不可刪，保留法律存證（鐵則 5）。
+ */
+function deleteContract(p, e) {
+  if (!p.contract_id) throw new Error('缺少 contract_id');
+  const sh = getSheet('contracts');
+  const hit = readSheet('contracts').filter(function (r) { return r.contract_id === p.contract_id; })[0];
+  if (!hit) throw new Error('找不到合約：' + p.contract_id);
+  if (String(hit.status) !== '待簽') {
+    throw new Error('只能刪除「待簽」的合約；' + p.contract_id + ' 目前為「' + hit.status + '」，已簽署合約不可刪除。');
+  }
+  // 待簽通常尚無 PDF／簽名圖，保險起見仍嘗試丟垃圾桶
+  [hit.sign_img_id, hit.pdf_id].forEach(function (id) {
+    if (id) try { DriveApp.getFileById(id).setTrashed(true); } catch (err) {}
+  });
+  sh.deleteRow(hit._row);
+  logAudit('delete', p.contract_id, e, (hit.room + ' ' + (hit.bed || '')).trim() + '／' + hit.name);
+  return { ok: true, contract_id: p.contract_id };
 }
 
 /** 清掉測試資料（contracts 裡姓名以「測試」開頭的列） */
