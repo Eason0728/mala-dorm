@@ -73,11 +73,9 @@ function doPost(e) {
         if (!p.key) throw new Error('缺少 key');
         setSetting(String(p.key), p.value);
         return jsonOut({ ok: true, key: p.key, value: p.value });
-      case 'wipeAll':
-        requireAdmin(p);
-        if (p.confirm !== 'WIPE') throw new Error('需帶 confirm=WIPE');
-        wipeAllData();
-        return jsonOut({ ok: true });
+      // 'wipeAll' 端點已於 2026-08-14 移除（Eason 指示）。
+      // 原本帶 admin 通行碼＋confirm=WIPE 就能從網路清空所有合約與點交資料。
+      // 正式合約是法律文件，這個端點的風險與用途完全不成比例；要清測試資料請用 cleanupTest。
       default:
         return jsonOut({ ok: false, error: '未知的 action：' + p.action });
     }

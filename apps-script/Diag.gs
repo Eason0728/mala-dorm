@@ -74,16 +74,13 @@ function cleanupE2E() {
   Logger.log('清掉 ' + cs.length + ' 筆合約、相關點交單、' + files + ' 個檔案（丟垃圾桶）');
 }
 
-/** ⚠️ 危險：清空全部合約與點交資料（含簽名圖與 PDF）。只在確認全是測試資料時用。 */
-function wipeAllData() {
-  let files = 0;
-  const trash = function (id) { if (id) try { DriveApp.getFileById(id).setTrashed(true); files++; } catch (e) {} };
-  readSheet('contracts').forEach(function (r) { trash(r.sign_img_id); trash(r.pdf_id); });
-  readSheet('handovers').forEach(function (r) { trash(r.sign_img_id); trash(r.pdf_id); });
-  ['contracts', 'handovers'].forEach(function (name) {
-    const sh = getSheet(name);
-    if (sh.getLastRow() > 1) sh.deleteRows(2, sh.getLastRow() - 1);
-  });
-  logAudit('wipe_all', '', null, files + ' 個檔案');
-  Logger.log('已清空 contracts／handovers，' + files + ' 個檔案丟垃圾桶');
-}
+/*
+ * wipeAllData() 已於 2026-08-14 移除（Eason 指示）。
+ *
+ * 它會清空 contracts／handovers 兩個分頁的所有資料列，並把簽名圖與 PDF 丟進垃圾桶；
+ * 且可經由 Api.gs 的 'wipeAll' 端點從網路觸發（該端點同日一併移除）。
+ * 系統上線後試算表裡都是正式合約——法律文件——這支函式的風險與用途完全不成比例。
+ *
+ * 要清測試資料請用上面的 cleanupE2E()（只刪姓名以「測試」開頭的資料）。
+ * 請不要把這支加回來；真的需要全清時，人工在試算表上操作，看得到自己在刪什麼。
+ */
