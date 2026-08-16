@@ -50,6 +50,24 @@ function doPost(e) {
 
   try {
     switch (p.action) {
+      // ── 讀取類：與 doGet 完全相同的四個 action（2026-08-15 新增）──
+      // 為什麼要在 doPost 也掛一份：新的集團管理系統一律用 POST 呼叫後端
+      // （POST + text/plain 可避開 CORS preflight；用 GET 會讓通行碼出現在
+      // 網址列，瀏覽器紀錄與伺服器 log 都會留下）。原本這四個只在 doGet 有，
+      // 透過新系統呼叫會落進下面的 default 回「未知的 action」。
+      //
+      // 這是純新增：doGet 那四個 case 一個字沒動，舊網址與已發出的簽約連結
+      // 行為完全不變；這裡只是把同樣的函式再掛一個入口。
+      case 'rooms':
+        return jsonOut({ ok: true, rooms: ROOMS, equip: EQUIP_ITEMS });
+      case 'list':
+        requireAdmin(p);
+        return jsonOut({ ok: true, contracts: listContracts() });
+      case 'contract':
+        return jsonOut(getContractByToken(p.token, e));
+      case 'handover':
+        return jsonOut(getHandoverByToken(p.token, e));
+
       case 'create':
         requireAdmin(p);
         return jsonOut(createContract(p, e));
