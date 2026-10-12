@@ -39,13 +39,21 @@ function getHandoverByToken(token, e) {
   if (!token) throw new Error('缺少 token');
   const h = readSheet('handovers').filter(function (r) { return r.token === token; })[0];
   if (!h) throw new Error('連結無效');
+  logAudit('handover_open', h.handover_id, e, '');
+  // 2026-10-12：已簽署的點交連結只回狀態＋簽署日期，不回姓名、房床、品項、賠償、PDF
+  if (h.signed_at) {
+    return { ok: true, state: 'signed', handover: { signed_at: fmtDateTime(h.signed_at) } };
+  }
+  // 2026-10-12：未簽點交連結自建立（created_at）起 30 天到期，與合約同一支 isLinkExpired_
+  if (isLinkExpired_(h)) {
+    return { ok: false, state: 'expired', code: 410, error: LINK_EXPIRED_MSG };
+  }
   const c = readSheet('contracts').filter(function (r) { return r.contract_id === h.contract_id; })[0];
   if (!c) throw new Error('找不到對應合約');
   const s = getSettings();
-  logAudit('handover_open', h.handover_id, e, '');
   return {
     ok: true,
-    state: h.signed_at ? 'signed' : 'pending',
+    state: 'pending',
     handover: {
       handover_id: h.handover_id, contract_id: c.contract_id,
       name: c.name, room_bed: roomBedDisplay(c),
@@ -98,6 +106,9 @@ function submitHandover(p, e) {
     if (!h) throw new Error('連結無效');
     if (h.signed_at) return { ok: false, error: '這張點交單已經完成了', state: 'signed' };
     if (!p.sign_png) throw new Error('缺少簽名');
+    const pngErr = checkSignPng_(p.sign_png);  // 2026-10-12：與合約共用同一支簽名圖檢查
+    if (pngErr) throw new Error(pngErr);
+    if (isLinkExpired_(h)) return { ok: false, error: LINK_EXPIRED_MSG, state: 'expired' };
 
     const items = p.items || [];
     if (!items.length) throw new Error('設備清單不完整');

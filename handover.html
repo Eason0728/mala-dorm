@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<script>
+  // 防 clickjacking：被嵌進 iframe 時跳出框架，並先隱藏頁面避免被覆蓋誘導點擊
+  if (top !== self) { document.documentElement.style.display = 'none'; try { top.location = self.location; } catch (e) {} }
+</script>
 <title>退宿點交　承租人歸還設備範圍明細表</title>
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
@@ -89,6 +93,7 @@ async function load() {
   if (!t) throw new Error('連結不完整，請向宿舍長索取正確的點交連結。');
   const r = await fetch(API_URL + '?action=handover&token=' + encodeURIComponent(t));
   const j = await r.json();
+  if (j.state === 'expired') return j;  // 連結過期，交給啟動段顯示專屬畫面
   if (!j.ok) throw new Error(j.error || '連結無效');
   return j;
 }
@@ -227,12 +232,24 @@ async function submit() {
   showDone(j);
 }
 
+// PDF 連結只接受 https 的 Google Drive／Docs 主機，其餘一律不顯示連結
+function pdfLink(u, label) {
+  try {
+    const url = new URL(String(u || ''));
+    if (url.protocol !== 'https:') return '';
+    if (url.hostname !== 'drive.google.com' && url.hostname !== 'docs.google.com') return '';
+    return `<a href="${esc(url.href)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`;
+  } catch (e) {
+    return '';
+  }
+}
+
 function showDone(j) {
   document.getElementById('app').innerHTML = `
   <div class="done"><div class="tick">✓</div>
     <h1 style="font-size:20px;margin:10px 0 6px">點交完成</h1>
     <p style="color:#6f665f;font-size:14px">應賠償金額合計 <strong>${Number(j.compensation_total||0).toLocaleString()} 元</strong></p>
-    ${j.pdf_url?`<a href="${j.pdf_url}" target="_blank">下載點交單 PDF</a>`:''}
+    ${pdfLink(j.pdf_url, '下載點交單 PDF')}
   </div>`;
 }
 
@@ -240,12 +257,18 @@ function showDone(j) {
   const app = document.getElementById('app');
   try {
     D = await load();
+    if (D.state === 'expired') {
+      app.innerHTML = `<div class="done"><div class="tick" style="color:#b8860b">!</div>
+        <h1 style="font-size:19px;margin:10px 0 6px">連結已過期</h1>
+        <p style="color:#6f665f;font-size:14px">${esc(D.error || '連結已過期，請洽管理員重發')}</p></div>`;
+      return;
+    }
     if (D.state === 'signed') {
-      const h = D.handover;
+      const h = D.handover || {};
       app.innerHTML = `<div class="done"><div class="tick">✓</div>
         <h1 style="font-size:19px;margin:10px 0 6px">這張點交單已完成</h1>
-        <p style="color:#6f665f;font-size:14px">點交時間 ${esc(h.signed_at)}　賠償合計 ${Number(h.compensation_total||0).toLocaleString()} 元</p>
-        ${h.pdf_url?`<a href="${h.pdf_url}" target="_blank">下載點交單 PDF</a>`:''}</div>`;
+        <p style="color:#6f665f;font-size:14px">點交時間 ${esc(h.signed_at||'')}</p>
+        <p style="color:#6f665f;font-size:13px">如需點交單副本，請洽管理員。</p></div>`;
       return;
     }
     render();

@@ -175,15 +175,68 @@ function listContracts() {
   });
 }
 
+var LINK_TTL_DAYS = 30;
+var LINK_EXPIRED_MSG = '連結已過期，請洽管理員重發';
+var SIGN_PNG_MAX_CHARS = 500 * 1024;  // 簽名圖 data URL 字元數上限（約 500KB）
+
+/** created_at 可能是 'yyyy-MM-dd HH:mm:ss'（台北時間字串）或被試算表轉成 Date；解析不出回 null */
+function parseCreatedAt_(v) {
+  if (!v) return null;
+  if (Object.prototype.toString.call(v) === '[object Date]') return isNaN(v.getTime()) ? null : v;
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+  if (!m) return null;
+  const d = new Date(m[1] + '-' + m[2] + '-' + m[3] + 'T' + m[4] + ':' + m[5] + ':' + m[6] + '+08:00');
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/** 待簽合約是否已超過 30 天（created_at 缺漏或無法解析→視為未過期，避免誤殺） */
+function isLinkExpired_(row, now) {
+  const created = parseCreatedAt_(row.created_at);
+  if (!created) return false;
+  return ((now || new Date()).getTime() - created.getTime()) > LINK_TTL_DAYS * 86400000;
+}
+
+/** sign_png 必須是 data:image/png;base64, 開頭且大小不超過上限；回傳錯誤訊息或空字串 */
+function checkSignPng_(v) {
+  const s = String(v || '');
+  const prefix = 'data:image/png;base64,';
+  if (s.indexOf(prefix) !== 0) return '簽名格式不正確';
+  if (s.length > SIGN_PNG_MAX_CHARS) return '簽名圖檔過大';
+  const body = s.slice(prefix.length);
+  if (!/^[A-Za-z0-9+\/]+={0,2}$/.test(body)) return '簽名格式不正確';
+  // 2026-10-12：解碼後前 8 bytes 必須是 PNG 檔頭 89 50 4E 47 0D 0A 1A 0A（取前 12 個 base64 字元＝9 bytes，無需補 =）
+  if (body.length < 12) return '簽名格式不正確';
+  let head;
+  try { head = Utilities.base64Decode(body.slice(0, 12)); } catch (err) { return '簽名格式不正確'; }
+  const sig = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  for (let i = 0; i < 8; i++) { if ((head[i] & 0xFF) !== sig[i]) return '簽名格式不正確'; }
+  return '';
+}
+
 /** Phase 2 才會用到，這裡先放最小版本供測試 */
 function getContractByToken(token, e) {
   if (!token) throw new Error('缺少 token');
   const hit = readSheet('contracts').filter(function (r) { return r.token === token; })[0];
   if (!hit) throw new Error('連結無效');
   logAudit('open', hit.contract_id, e, '');
+  // 2026-10-12 Eason 同意：已簽署的連結只回狀態＋簽署日期＋非個資欄位，不回身分證／電話／地址／條文（條文內含個資）
+  if (hit.status !== '待簽') {
+    return {
+      ok: true, state: 'signed',
+      contract: {
+        // 保留：姓名＋房床＋簽署時間（簽約人本人看完成畫面用）；已不回 contract_id、租期
+        name: hit.name, room_bed: roomBedDisplay(hit),
+        signed_at: fmtDateTime(hit.signed_at),
+      },
+    };
+  }
+  // 2026-10-12 Eason 同意：未簽連結自建立起 30 天到期（用既有欄位 created_at 推算；讀不到就不擋，不影響舊資料）
+  if (isLinkExpired_(hit)) {
+    return { ok: false, state: 'expired', code: 410, error: LINK_EXPIRED_MSG };
+  }
   return {
     ok: true,
-    state: hit.status === '待簽' ? 'pending' : 'signed',
+    state: 'pending',
     contract: {
       contract_id: hit.contract_id, name: hit.name, id_no: hit.id_no,
       phone: hit.phone, mail_addr: hit.mail_addr,

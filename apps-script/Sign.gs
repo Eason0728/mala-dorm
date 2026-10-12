@@ -22,6 +22,9 @@ function submitSign(p, e) {
       return { ok: false, error: '這份合約已經簽署過了', state: 'signed' };
     }
     if (!p.sign_png) throw new Error('缺少簽名');
+    const pngErr = checkSignPng_(p.sign_png);  // 2026-10-12：格式與大小檢查
+    if (pngErr) throw new Error(pngErr);
+    if (isLinkExpired_(hit)) return { ok: false, error: LINK_EXPIRED_MSG, state: 'expired' };  // 與 GET 同一規則，防繞過
 
     // 身分資料由同仁自填（後端也驗一次，不信前端）
     const idNo = String(p.id_no || '').trim().toUpperCase();
