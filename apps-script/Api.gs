@@ -77,6 +77,10 @@ function doPost(e) {
         return jsonOut(createHandover(p, e));
       case 'handoverSign':
         return jsonOut(submitHandover(p, e));
+      // 2026-10-26 純新增（Eason 同意）：送出點交後，管理系統現場把點交 PDF 交給同仁
+      case 'handoverPdf':
+        requireAdmin(p);
+        return jsonOut(getHandoverPdf(p, e));
       case 'terminate':
         return jsonOut(markTerminate(p, e));
       case 'delete':

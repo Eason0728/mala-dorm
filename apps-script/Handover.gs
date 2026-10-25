@@ -149,6 +149,32 @@ function submitHandover(p, e) {
   }
 }
 
+/**
+ * 2026-10-26 純新增（Eason 同意，方案 A）：回傳已完成點交單的 PDF 檔本身（base64），
+ * 讓管理系統在現場把檔案交給同仁（手機分享／下載）。雲端硬碟的 PDF 沒開分享，同仁打不開連結。
+ * 只給管理端（doPost 已 requireAdmin）；只認已簽署、已產生 PDF 的點交單；不改任何資料（只記一筆稽核）。
+ * 不檢查 30 天連結到期：那是給同仁的公開連結用的，這裡是管理端。
+ */
+var HANDOVER_PDF_MAX_BYTES = 8 * 1024 * 1024;
+function getHandoverPdf(p, e) {
+  if (!p.token) throw new Error('缺少 token');
+  const h = readSheet('handovers').filter(function (r) { return r.token === p.token; })[0];
+  if (!h) throw new Error('找不到點交單');
+  if (!h.signed_at) return { ok: false, error: '這張點交單還沒完成，沒有 PDF' };
+  if (!h.pdf_id) return { ok: false, error: '點交單 PDF 還沒產生，請稍後再試' };
+  const file = DriveApp.getFileById(String(h.pdf_id));
+  const blob = file.getBlob();
+  const bytes = blob.getBytes();
+  if (bytes.length > HANDOVER_PDF_MAX_BYTES) return { ok: false, error: 'PDF 檔案太大，請從雲端硬碟下載' };
+  logAudit('handover_pdf_download', h.handover_id, e, '');
+  return {
+    ok: true,
+    name: String(file.getName() || ('點交單_' + h.handover_id + '.pdf')),
+    mime: 'application/pdf',
+    pdf_b64: Utilities.base64Encode(bytes)
+  };
+}
+
 function buildHandoverPdf(handoverId) {
   const h = readSheet('handovers').filter(function (r) { return r.handover_id === handoverId; })[0];
   if (!h) throw new Error('找不到點交單：' + handoverId);
