@@ -17,7 +17,8 @@ const ctx = {
   Utilities: { base64Encode: b => Buffer.from(b.map(x => x & 255)).toString('base64') },
   DriveApp: { getFileById: id => ({
     getName: () => '2026-09-01_王_設備點交.pdf',
-    getBlob: () => ({ getBytes: () => id === 'BIG' ? new Array(8 * 1024 * 1024 + 1).fill(0) : Array.from(PDF) })
+    getSize: () => id === 'BIG' ? 8 * 1024 * 1024 + 1 : PDF.length,
+    getBlob: () => { if (id === 'BIG') throw new Error('太大的檔不該讀內容'); return { getBytes: () => Array.from(PDF) }; }
   }) },
   readSheet: n => n === 'handovers' ? hrows.map(r => Object.assign({ _row: 2 }, r)) : [],
   getSettings: () => ({ 'admin.pass': 'pw' }),
@@ -44,10 +45,11 @@ ok('3 未簽／沒有 PDF／token 不存在／缺 token：不給檔', () => {
     assert.strictEqual(r.ok, false); assert(!r.pdf_b64);
   }
 });
-ok('4 超過 8MB：不回內容', () => { const r = post({ action: 'handoverPdf', token: 'h_big', pass: 'pw' }); assert.strictEqual(r.ok, false); assert(!r.pdf_b64); });
+ok('4 超過 8MB：先看大小就擋、不讀內容、不回內容', () => { const r = post({ action: 'handoverPdf', token: 'h_big', pass: 'pw' }); assert.strictEqual(r.ok, false); assert(!r.pdf_b64); });
 ok('5 不寫任何分頁、只記稽核', () => {
   assert.strictEqual(updates.length, 0);
-  assert(audits.length >= 1 && audits.every(a => a[0] === 'handover_pdf_download'));
+  assert(audits.length >= 1 && audits.every(a => a[0] === 'handover_pdf_fetch'));
+  assert(audits.every(a => a[3] === '2026-09-01_王_設備點交.pdf'), '稽核 detail 記檔名');
 });
 ok('6 doGet 沒有開這個入口（GET 會讓通行碼進網址）', () => {
   assert.strictEqual(JSON.parse(ctx.doGet({ parameter: { action: 'handoverPdf', token: 'h_signed', pass: 'pw' } }).s).ok, false);

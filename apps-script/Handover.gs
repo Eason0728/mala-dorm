@@ -163,13 +163,16 @@ function getHandoverPdf(p, e) {
   if (!h.signed_at) return { ok: false, error: '這張點交單還沒完成，沒有 PDF' };
   if (!h.pdf_id) return { ok: false, error: '點交單 PDF 還沒產生，請稍後再試' };
   const file = DriveApp.getFileById(String(h.pdf_id));
-  const blob = file.getBlob();
-  const bytes = blob.getBytes();
+  // 先看大小再讀內容（大檔不整份吃進記憶體）；讀完再確認一次
+  if (Number(file.getSize()) > HANDOVER_PDF_MAX_BYTES) return { ok: false, error: 'PDF 檔案太大，請從雲端硬碟下載' };
+  const bytes = file.getBlob().getBytes();
   if (bytes.length > HANDOVER_PDF_MAX_BYTES) return { ok: false, error: 'PDF 檔案太大，請從雲端硬碟下載' };
-  logAudit('handover_pdf_download', h.handover_id, e, '');
+  const name = String(file.getName() || ('點交單_' + h.handover_id + '.pdf'));
+  // 記「取檔」不是「下載」：管理系統一打開完成畫面就會先取檔（iOS 分享要按下當下就有檔）
+  logAudit('handover_pdf_fetch', h.handover_id, e, name);
   return {
     ok: true,
-    name: String(file.getName() || ('點交單_' + h.handover_id + '.pdf')),
+    name: name,
     mime: 'application/pdf',
     pdf_b64: Utilities.base64Encode(bytes)
   };
