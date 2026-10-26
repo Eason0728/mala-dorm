@@ -122,12 +122,19 @@ function fmtRoc(d) {
   return '民國' + (dt.getFullYear() - 1911) + '年' + (dt.getMonth() + 1) + '月' + dt.getDate() + '日';
 }
 
-/** 租期迄日：起日 + n 個月 − 1 天 */
+/**
+ * 租期迄日：起日 n 個月後的「同一天」再減 1 天；那個月沒有這一天（例 2/31）就取那個月最後一天。
+ * 2026-10-26 Eason 決定（全資料審查 A-12 後續）：原本用 setMonth 會溢位，8/31 起租六個月算成隔年 3/2，
+ * 改為 2/28（閏年 2/29）；3/31 → 9/30。8/1 → 1/31、1/31 → 7/30 不變。
+ * 年月日一律照台北時間（TZ）取、用整數算，不受執行環境時區影響；回傳該日 UTC 午夜（fmtDate 以台北時間格式化仍是同一天）。
+ */
 function addMonthsMinusDay(start, months) {
-  const d = new Date(start);
-  d.setMonth(d.getMonth() + Number(months));
-  d.setDate(d.getDate() - 1);
-  return d;
+  const p = Utilities.formatDate(new Date(start), TZ, 'yyyy-MM-dd').split('-').map(Number);
+  const total = p[1] - 1 + Number(months);
+  const y = p[0] + Math.floor(total / 12), m = ((total % 12) + 12) % 12;
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();   // 目標月份有幾天
+  const day = p[2] > last ? last : p[2] - 1;                    // 沒有這一天＝月底；有＝前一天（0＝上個月最後一天）
+  return new Date(Date.UTC(y, m, day));
 }
 
 /** 稽核紀錄，只增不改 */
